@@ -19,7 +19,7 @@ process.env.TZ = 'Asia/Jakarta';
 const ADMIN_SECRET_KEY = 'ABAD4D_SPORT_SUPER_SECRET_2026_XYZ123';
 const ADMIN_USERNAME = 'admin';
 
-// ============ KATEGORI PIALA DUNIA (DIPERLENGKAP) ============
+// ============ KATEGORI PIALA DUNIA 2026 (HAPUS QATAR) ============
 const WORLD_CUP_CATEGORIES = {
     'Berita Umum': {
         keywords: []
@@ -28,28 +28,39 @@ const WORLD_CUP_CATEGORIES = {
         keywords: [
             'piala dunia 2026', 'world cup 2026', 'usa 2026', 'mexico 2026', 'canada 2026',
             'fifa world cup 2026', 'wc 2026', 'worldcup 2026', 'piala dunia 2026 jadwal',
-            'world cup 2026 news', 'world cup 2026 update'
+            'world cup 2026 news', 'world cup 2026 update', 'piala dunia amerika serikat',
+            'world cup usa mexico canada', 'wc 2026 qualification', 'kualifikasi piala dunia 2026'
         ]
     },
     'Jadwal Piala Dunia': {
-        keywords: ['jadwal piala dunia', 'schedule world cup', 'world cup match', 'world cup 2026 schedule']
+        keywords: ['jadwal piala dunia 2026', 'schedule world cup 2026', 'world cup 2026 match', 'world cup 2026 schedule']
     },
     'Grup Piala Dunia': {
-        keywords: ['grup piala dunia', 'world cup groups', 'draw piala dunia', 'pembagian grup']
+        keywords: ['grup piala dunia 2026', 'world cup 2026 groups', 'draw piala dunia 2026', 'pembagian grup piala dunia 2026']
     },
     'Bintang Piala Dunia': {
-        keywords: ['bintang piala dunia', 'world cup stars', 'mbappe', 'messi', 'haaland', 'ronaldo', 'neymar', 'vinicius', 'bellingham']
+        keywords: ['bintang piala dunia 2026', 'world cup 2026 stars', 'mbappe 2026', 'haaland 2026']
     },
     'Tim Lolos Piala Dunia': {
-        keywords: ['tim lolos piala dunia', 'qualified teams', 'lolos ke piala dunia', 'tiket piala dunia']
+        keywords: ['tim lolos piala dunia 2026', 'qualified teams world cup 2026', 'lolos ke piala dunia 2026']
     },
     'Hasil Pertandingan': {
-        keywords: ['hasil piala dunia', 'world cup result', 'skor piala dunia', 'hasil pertandingan', 'final score']
+        keywords: ['hasil piala dunia 2026', 'world cup 2026 result', 'skor piala dunia 2026']
     },
     'Sejarah Piala Dunia': {
         keywords: ['sejarah piala dunia', 'history world cup', 'juara piala dunia', 'world cup winners']
     }
 };
+
+// ============ KEYWORD YANG DILARANG (BERITA LAMA / QATAR) ============
+const FORBIDDEN_KEYWORDS = [
+    'qatar 2022', 'piala dunia 2022', 'world cup 2022', 'wc 2022',
+    'russia 2018', 'piala dunia 2018', 'brazil 2014', 'piala dunia 2014',
+    'legenda', 'kenangan', 'flashback', 'momen klasik', 'sejarah piala dunia 2022',
+    'final qatar', 'argentina vs prancis 2022', 'messi qatar', 'mbappe qatar',
+    '2022 world cup', 'world cup qatar', 'qatar world cup', 'world cup 2022 final',
+    'piala dunia qatar', 'doha', 'al bayt', 'lusail', '2022 qatar'
+];
 
 // ============ SUMBER WEBSITE BERITA PIALA DUNIA ============
 const NEWS_SOURCES = [
@@ -139,13 +150,53 @@ app.get('/api/admin/verify', (req, res) => {
     }
 });
 
-// ============ FUNGSI CEK DUPLIKAT LEBIH AKURAT ============
+// ============ FILTER BERITA LAMA (QATAR & > 1 MINGGU) ============
+function isRecentAndValid(title, publishedAt) {
+    const titleLower = title.toLowerCase();
+    
+    // 1. Cek keyword terlarang (Qatar / Piala Dunia lama)
+    for (const forbidden of FORBIDDEN_KEYWORDS) {
+        if (titleLower.includes(forbidden)) {
+            console.log(`      🚫 DITOLAK (berita lama/Qatar): ${title.substring(0, 50)}`);
+            return false;
+        }
+    }
+    
+    // 2. Pastikan mengandung kata kunci Piala Dunia 2026
+    const validKeywords = ['piala dunia 2026', 'world cup 2026', 'usa 2026', 'mexico 2026', 'canada 2026', 'wc 2026', 'worldcup 2026'];
+    let hasValidKeyword = false;
+    for (const keyword of validKeywords) {
+        if (titleLower.includes(keyword)) {
+            hasValidKeyword = true;
+            break;
+        }
+    }
+    
+    if (!hasValidKeyword) {
+        console.log(`      🚫 DITOLAK (bukan Piala Dunia 2026): ${title.substring(0, 50)}`);
+        return false;
+    }
+    
+    // 3. Cek tanggal (hanya berita 7 hari terakhir)
+    if (publishedAt) {
+        const newsDate = new Date(publishedAt);
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        if (newsDate < oneWeekAgo) {
+            console.log(`      🚫 DITOLAK (berita > 7 hari): ${title.substring(0, 50)}`);
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// ============ FUNGSI CEK DUPLIKAT ============
 async function isDuplicate(title, link, category) {
     return new Promise((resolve) => {
-        // Bersihkan title untuk perbandingan yang lebih akurat
         const cleanTitle = title.toLowerCase().replace(/[^\w\s]/gi, '').substring(0, 80);
         
-        // Cek berdasarkan title (lebih akurat)
         db.get(
             `SELECT id FROM news WHERE 
                 (LOWER(REPLACE(REPLACE(title, '?', ''), '!', '')) LIKE ?) OR 
@@ -153,7 +204,7 @@ async function isDuplicate(title, link, category) {
             [`%${cleanTitle}%`, category],
             (err, row) => {
                 if (row) {
-                    console.log(`      ⏭️ DUPLIKAT terdeteksi (title match): ${title.substring(0, 50)}`);
+                    console.log(`      ⏭️ DUPLIKAT: ${title.substring(0, 50)}`);
                     resolve(true);
                 } else {
                     resolve(false);
@@ -163,7 +214,7 @@ async function isDuplicate(title, link, category) {
     });
 }
 
-// ============ DETEKSI KATEGORI (DIPERBAIKI) ============
+// ============ DETEKSI KATEGORI ============
 function detectCategory(title) {
     const titleLower = title.toLowerCase();
     const order = ['Jadwal Piala Dunia', 'Hasil Pertandingan', 'Grup Piala Dunia', 'Tim Lolos Piala Dunia', 'Bintang Piala Dunia', 'Sejarah Piala Dunia', 'Piala Dunia 2026'];
@@ -296,7 +347,7 @@ async function downloadImage(imageUrl, retryCount = 0) {
     }
 }
 
-// ============ AMBIL GAMBAR DARI LINK ARTIKEL (FALLBACK) ============
+// ============ AMBIL GAMBAR DARI LINK ARTIKEL ============
 async function extractImageFromArticle(url) {
     if (!url) return null;
     
@@ -338,9 +389,11 @@ async function extractImageFromArticle(url) {
     }
 }
 
-// ============ SCRAPING BERITA (DIPERBAIKI) ============
+// ============ SCRAPING BERITA (DENGAN FILTER KETAT) ============
 async function scrapeNews() {
     const allArticles = [];
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     
     for (const source of NEWS_SOURCES) {
         try {
@@ -371,13 +424,13 @@ async function scrapeNews() {
                         } catch(e) { return; }
                     }
                     
-                    // Hindari link yang sama
                     if (processedLinks.has(fullUrl)) return;
                     processedLinks.add(fullUrl);
                     
-                    const isWorldCup = /piala dunia|world cup|wc 2026|worldcup|fifa world cup/i.test(text);
+                    // Filter hanya Piala Dunia 2026
+                    const isValid = isRecentAndValid(text, new Date().toISOString());
                     
-                    if (fullUrl && isWorldCup && !fullUrl.includes('tag/') && !fullUrl.includes('/indeks') && !fullUrl.includes('login') && !fullUrl.includes('register')) {
+                    if (fullUrl && isValid && !fullUrl.includes('tag/') && !fullUrl.includes('/indeks') && !fullUrl.includes('login') && !fullUrl.includes('register')) {
                         let imageUrl = null;
                         
                         const parent = $(elem).closest('article, .article, .post, .item, .list-item');
@@ -407,34 +460,22 @@ async function scrapeNews() {
                             }
                         }
                         
-                        // Filter judul yang tidak relevan
-                        const excludeWords = ['bonus', 'deposit', 'withdraw', 'slot', 'casino', 'poker', 'togel', 'livechat', 'login', 'daftar'];
-                        let isExcluded = false;
-                        for (const word of excludeWords) {
-                            if (text.toLowerCase().includes(word)) {
-                                isExcluded = true;
-                                break;
-                            }
-                        }
+                        const category = detectCategory(text);
                         
-                        if (!isExcluded) {
-                            const category = detectCategory(text);
-                            
-                            allArticles.push({
-                                title: fixTitle(text),
-                                link: fullUrl,
-                                image: imageUrl,
-                                source: source.name,
-                                category: category,
-                                published_at: new Date().toISOString()
-                            });
-                            articlesCount++;
-                        }
+                        allArticles.push({
+                            title: fixTitle(text),
+                            link: fullUrl,
+                            image: imageUrl,
+                            source: source.name,
+                            category: category,
+                            published_at: new Date().toISOString()
+                        });
+                        articlesCount++;
                     }
                 }
             });
             
-            console.log(`    ✅ ${articlesCount} berita`);
+            console.log(`    ✅ ${articlesCount} berita (Piala Dunia 2026)`);
             await sleep(800);
             
         } catch (error) {
@@ -445,10 +486,12 @@ async function scrapeNews() {
     return allArticles;
 }
 
-// ============ GOOGLE NEWS SCRAPING ============
+// ============ GOOGLE NEWS SCRAPING (FILTER KETAT) ============
 async function scrapeGoogleNews() {
-    const queries = ['piala+dunia+2026', 'world+cup+2026', 'jadwal+piala+dunia+2026', 'berita+piala+dunia+2026'];
+    const queries = ['piala+dunia+2026', 'world+cup+2026', 'jadwal+piala+dunia+2026', 'kualifikasi+piala+dunia+2026'];
     const articles = [];
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     
     for (const query of queries) {
         try {
@@ -457,23 +500,16 @@ async function scrapeGoogleNews() {
             const $ = cheerio.load(response.data, { xmlMode: true });
             
             $('item').each((i, item) => {
-                if (i >= 3) return;
+                if (i >= 5) return;
                 const title = $(item).find('title').text();
                 const link = $(item).find('link').text();
-                const pubDate = $(item).find('pubDate').text();
+                let pubDate = $(item).find('pubDate').text();
                 
                 if (title && title.length > 30 && link) {
-                    // Filter judul tidak relevan
-                    const excludeWords = ['bonus', 'deposit', 'withdraw', 'slot', 'casino', 'poker', 'togel'];
-                    let isExcluded = false;
-                    for (const word of excludeWords) {
-                        if (title.toLowerCase().includes(word)) {
-                            isExcluded = true;
-                            break;
-                        }
-                    }
+                    // Validasi berita (hanya Piala Dunia 2026 & 7 hari terakhir)
+                    const isValid = isRecentAndValid(title, pubDate);
                     
-                    if (!isExcluded) {
+                    if (isValid) {
                         articles.push({
                             title: fixTitle(title),
                             link: link,
@@ -561,7 +597,7 @@ async function scrapeArticleContent(url) {
 
 // ============ FIX TITLE ============
 function fixTitle(title) {
-    if (!title) return 'Berita Piala Dunia Terbaru';
+    if (!title) return 'Berita Piala Dunia 2026 Terbaru';
     
     let fixed = title;
     fixed = fixed.replace(/^[^a-zA-Z0-9\s]+/, '');
@@ -569,11 +605,16 @@ function fixTitle(title) {
     fixed = fixed.replace(/[!?]+$/, '');
     fixed = fixed.replace(/\s+/g, ' ').trim();
     
+    // Hapus referensi Qatar / 2022
+    fixed = fixed.replace(/qatar 2022/gi, '');
+    fixed = fixed.replace(/piala dunia 2022/gi, '');
+    fixed = fixed.replace(/world cup 2022/gi, '');
+    
     if (fixed.length > 0) {
         fixed = fixed.charAt(0).toUpperCase() + fixed.slice(1);
     }
     
-    return fixed.substring(0, 120) || 'Berita Piala Dunia Terbaru';
+    return fixed.substring(0, 120) || 'Berita Piala Dunia 2026 Terbaru';
 }
 
 // ============ BUAT DESKRIPSI ============
@@ -597,24 +638,6 @@ function createDescription(title, originalContent, category) {
             case 'Piala Dunia 2026':
                 main = `Piala Dunia 2026 akan menjadi edisi istimewa karena digelar di tiga negara: Amerika Serikat, Meksiko, dan Kanada. Turnamen ini akan diikuti 48 tim untuk pertama kalinya. Pertandingan pembukaan akan digelar pada 12 Juni 2026 di Stadion Azteca, Meksiko City. Babak grup akan berlangsung dari 12 Juni hingga 28 Juni 2026. Babak 32 besar dimulai 29 Juni 2026, babak 16 besar pada 3 Juli 2026, perempat final 7 Juli 2026, semi final 11 Juli 2026, dan grand final pada 12 Juli 2026 di MetLife Stadium, New Jersey.`;
                 break;
-            case 'Jadwal Piala Dunia':
-                main = `Jadwal lengkap Piala Dunia 2026: Babak Grup (12-28 Juni 2026), Babak 32 Besar (29 Juni - 2 Juli 2026), Babak 16 Besar (3-6 Juli 2026), Perempat Final (7-8 Juli 2026), Semi Final (11 Juli 2026), Final (12 Juli 2026 di MetLife Stadium, New Jersey).`;
-                break;
-            case 'Grup Piala Dunia':
-                main = `Sebanyak 48 tim dibagi ke dalam 16 grup pada Piala Dunia 2026. Dua tim teratas dari setiap grup akan lolos ke babak 32 besar. Format baru ini memberikan peluang lebih besar bagi tim-tim underdog.`;
-                break;
-            case 'Bintang Piala Dunia':
-                main = `Para bintang dunia siap meramaikan Piala Dunia 2026: Kylian Mbappe (Prancis), Erling Haaland (Norwegia), Jude Bellingham (Inggris), Vinicius Jr (Brasil), Jamal Musiala (Jerman), dan Pedri (Spanyol). Persaingan merebut Golden Boot diprediksi sangat ketat.`;
-                break;
-            case 'Tim Lolos Piala Dunia':
-                main = `Tim-tim yang telah lolos ke Piala Dunia 2026: Prancis, Inggris, Jerman, Spanyol, Italia, Belanda, Portugal, Brasil, Argentina, Uruguay, Amerika Serikat, Meksiko, Kanada, Jepang, Korea Selatan, Australia, Maroko, Senegal, dan masih banyak lagi. Total 48 tim akan bertanding.`;
-                break;
-            case 'Hasil Pertandingan':
-                main = `Hasil pertandingan Piala Dunia 2026 akan terus diperbarui. Setiap laga menyajikan drama dan ketegangan hingga menit akhir. Simak skor akhir dan rekap pertandingan hanya di ABAD4D SPORT.`;
-                break;
-            case 'Sejarah Piala Dunia':
-                main = `Piala Dunia pertama kali digelar pada 1930 di Uruguay. Brasil menjadi negara dengan koleksi trofi terbanyak (5 gelar), diikuti Italia dan Jerman (4 gelar). Piala Dunia 2026 akan menjadi edisi pertama dengan 48 tim.`;
-                break;
             default:
                 main = `Piala Dunia 2026 akan digelar di Amerika Serikat, Meksiko, dan Kanada pada 12 Juni - 12 Juli 2026. Turnamen ini diikuti 48 tim untuk pertama kalinya.`;
         }
@@ -630,12 +653,12 @@ function createDescription(title, originalContent, category) {
     return final.substring(0, 3000);
 }
 
-// ============ UPDATE BERITA (ANTI DUPLIKAT) ============
+// ============ UPDATE BERITA ============
 async function updateNews() {
     const now = getWIB();
-    console.log('\n' + '='.repeat(55));
-    console.log(`🏆 ${now} WIB - UPDATE BERITA PIALA DUNIA`);
-    console.log('='.repeat(55));
+    console.log('\n' + '='.repeat(60));
+    console.log(`🏆 ${now} WIB - UPDATE BERITA PIALA DUNIA 2026`);
+    console.log('='.repeat(60));
     
     let allArticles = [];
     
@@ -645,8 +668,8 @@ async function updateNews() {
         scrapeGoogleNews()
     ]);
     
-    console.log(`  Website: ${webArticles.length} berita`);
-    console.log(`  Google News: ${googleArticles.length} berita`);
+    console.log(`  Website: ${webArticles.length} berita (Piala Dunia 2026)`);
+    console.log(`  Google News: ${googleArticles.length} berita (Piala Dunia 2026)`);
     allArticles.push(...webArticles, ...googleArticles);
     
     // Filter unik berdasarkan judul
@@ -662,25 +685,32 @@ async function updateNews() {
     
     console.log(`\n📊 TOTAL BERITA UNIK: ${unique.length}`);
     
-    // Urutkan berdasarkan waktu
+    // Urutkan berdasarkan waktu (terbaru dulu)
     unique.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
     
-    // Ambil 10 berita terbaru
-    const latestNews = unique.slice(0, 10);
-    console.log(`\n📋 MENGAMBIL ${latestNews.length} BERITA TERBARU...`);
+    // Hanya ambil 5 berita terbaru untuk diproses
+    const latestNews = unique.slice(0, 5);
+    console.log(`\n📋 MENGAMBIL ${latestNews.length} BERITA TERBARU (maksimal 7 hari)...`);
     
     let saved = 0;
     let duplicateCount = 0;
     let imageFailCount = 0;
+    let rejectedCount = 0;
     
-    console.log(`\n📝 TARGET: 1-2 berita per jam (ANTI DUPLIKAT)\n`);
+    console.log(`\n📝 TARGET: 1-2 berita per jam (HANYA PIALA DUNIA 2026, BUKAN QATAR)\n`);
     
     for (const article of latestNews) {
         if (saved >= 2) break;
         
         const category = detectCategory(article.title);
         
-        // CEK DUPLIKAT LENGKAP
+        // Validasi ulang (filter ketat)
+        if (!isRecentAndValid(article.title, article.published_at)) {
+            rejectedCount++;
+            continue;
+        }
+        
+        // Cek duplikat
         const isDuplicateNews = await isDuplicate(article.title, article.link, category);
         
         if (isDuplicateNews) {
@@ -745,12 +775,13 @@ async function updateNews() {
         await sleep(500);
     }
     
-    console.log('\n' + '='.repeat(55));
+    console.log('\n' + '='.repeat(60));
     console.log(`✅ UPDATE SELESAI!`);
     console.log(`   📰 Berita baru disimpan: ${saved}`);
     console.log(`   ⏭️ Duplikat tercegah: ${duplicateCount}`);
+    console.log(`   🚫 Berita ditolak (lama/Qatar): ${rejectedCount}`);
     console.log(`   ❌ Gambar gagal: ${imageFailCount}`);
-    console.log('='.repeat(55) + '\n');
+    console.log('='.repeat(60) + '\n');
 }
 
 function sleep(ms) {
@@ -789,7 +820,6 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
     
-    // Tambahkan index untuk mempercepat pengecekan duplikat
     db.run(`CREATE INDEX IF NOT EXISTS idx_title ON news(title)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_published_at ON news(published_at)`);
     
@@ -800,10 +830,9 @@ db.serialize(() => {
     )`);
 });
 
-// Ganti password default dengan yang lebih kuat
 bcrypt.hash('admin123', 10).then(hash => {
     db.run(`INSERT OR IGNORE INTO admin (id, username, password) VALUES (1, 'admin', ?)`, [hash]);
-    console.log('✅ Admin: admin / admin123 (Ganti password setelah login pertama)');
+    console.log('✅ Admin: admin / admin123');
 });
 
 // ============ API ENDPOINTS ============
@@ -865,7 +894,7 @@ app.delete('/api/news/:id', (req, res) => {
 
 app.post('/api/fetch-news', async (req, res) => {
     await updateNews();
-    res.json({ message: 'Update berita Piala Dunia selesai!' });
+    res.json({ message: 'Update berita Piala Dunia 2026 selesai!' });
 });
 
 // ============ ROUTE UNTUK HALAMAN STATIS ============
@@ -892,13 +921,14 @@ app.get('*.html', (req, res) => {
 
 // ============ JALANKAN SERVER ============
 app.listen(PORT, async () => {
-    console.log(`\n🏆🏆🏆 ABAD4D SPORT - BOT PIALA DUNIA 2026 🏆🏆🏆`);
+    console.log(`\n🏆🏆🏆 ABAD4D SPORT - PIALA DUNIA 2026 🏆🏆🏆`);
     console.log(`📍 Server: http://localhost:${PORT}`);
-    console.log(`🔑 Admin: admin / admin123 (Ganti password segera!)`);
+    console.log(`🔑 Admin: admin / admin123`);
     console.log(`🔐 Secret Key: ${ADMIN_SECRET_KEY}`);
     console.log(`📡 SUMBER: Bola.net, Goal.com, Google News`);
-    console.log(`🎯 TARGET: 1-2 berita per jam (ANTI DUPLIKAT AKTIF)`);
-    console.log(`⏰ UPDATE: Setiap 1 jam (24 jam penuh)\n`);
+    console.log(`🎯 FILTER: HANYA Piala Dunia 2026 (BUKAN Qatar 2022)`);
+    console.log(`📅 BATAS WAKTU: Maksimal 7 hari dari sekarang`);
+    console.log(`⏰ UPDATE: Setiap 1 jam\n`);
     
     console.log('📰 Memulai update pertama...\n');
     await updateNews();
