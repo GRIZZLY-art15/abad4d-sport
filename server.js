@@ -19,7 +19,7 @@ process.env.TZ = 'Asia/Jakarta';
 const ADMIN_SECRET_KEY = 'ABAD4D_SPORT_SUPER_SECRET_2026_XYZ123';
 const ADMIN_USERNAME = 'admin';
 
-// ============ KATEGORI PIALA DUNIA ============
+// ============ KATEGORI PIALA DUNIA (DIPERLENGKAP) ============
 const WORLD_CUP_CATEGORIES = {
     'Berita Umum': {
         keywords: []
@@ -27,7 +27,8 @@ const WORLD_CUP_CATEGORIES = {
     'Piala Dunia 2026': {
         keywords: [
             'piala dunia 2026', 'world cup 2026', 'usa 2026', 'mexico 2026', 'canada 2026',
-            'fifa world cup 2026', 'wc 2026'
+            'fifa world cup 2026', 'wc 2026', 'worldcup 2026', 'piala dunia 2026 jadwal',
+            'world cup 2026 news', 'world cup 2026 update'
         ]
     },
     'Jadwal Piala Dunia': {
@@ -37,13 +38,13 @@ const WORLD_CUP_CATEGORIES = {
         keywords: ['grup piala dunia', 'world cup groups', 'draw piala dunia', 'pembagian grup']
     },
     'Bintang Piala Dunia': {
-        keywords: ['bintang piala dunia', 'world cup stars', 'mbappe', 'messi', 'haaland', 'ronaldo']
+        keywords: ['bintang piala dunia', 'world cup stars', 'mbappe', 'messi', 'haaland', 'ronaldo', 'neymar', 'vinicius', 'bellingham']
     },
     'Tim Lolos Piala Dunia': {
         keywords: ['tim lolos piala dunia', 'qualified teams', 'lolos ke piala dunia', 'tiket piala dunia']
     },
     'Hasil Pertandingan': {
-        keywords: ['hasil piala dunia', 'world cup result', 'skor piala dunia', 'hasil pertandingan']
+        keywords: ['hasil piala dunia', 'world cup result', 'skor piala dunia', 'hasil pertandingan', 'final score']
     },
     'Sejarah Piala Dunia': {
         keywords: ['sejarah piala dunia', 'history world cup', 'juara piala dunia', 'world cup winners']
@@ -138,7 +139,31 @@ app.get('/api/admin/verify', (req, res) => {
     }
 });
 
-// ============ DETEKSI KATEGORI ============
+// ============ FUNGSI CEK DUPLIKAT LEBIH AKURAT ============
+async function isDuplicate(title, link, category) {
+    return new Promise((resolve) => {
+        // Bersihkan title untuk perbandingan yang lebih akurat
+        const cleanTitle = title.toLowerCase().replace(/[^\w\s]/gi, '').substring(0, 80);
+        
+        // Cek berdasarkan title (lebih akurat)
+        db.get(
+            `SELECT id FROM news WHERE 
+                (LOWER(REPLACE(REPLACE(title, '?', ''), '!', '')) LIKE ?) OR 
+                (category = ? AND published_at > datetime('now', '-48 hours'))`,
+            [`%${cleanTitle}%`, category],
+            (err, row) => {
+                if (row) {
+                    console.log(`      ⏭️ DUPLIKAT terdeteksi (title match): ${title.substring(0, 50)}`);
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            }
+        );
+    });
+}
+
+// ============ DETEKSI KATEGORI (DIPERBAIKI) ============
 function detectCategory(title) {
     const titleLower = title.toLowerCase();
     const order = ['Jadwal Piala Dunia', 'Hasil Pertandingan', 'Grup Piala Dunia', 'Tim Lolos Piala Dunia', 'Bintang Piala Dunia', 'Sejarah Piala Dunia', 'Piala Dunia 2026'];
@@ -154,7 +179,7 @@ function detectCategory(title) {
     return 'Berita Umum';
 }
 
-// ============ CLEAN CONTENT (BERSIHKAN METADATA) ============
+// ============ CLEAN CONTENT ============
 function cleanContent(content) {
     if (!content) return '';
     
@@ -313,7 +338,7 @@ async function extractImageFromArticle(url) {
     }
 }
 
-// ============ SCRAPING BERITA ============
+// ============ SCRAPING BERITA (DIPERBAIKI) ============
 async function scrapeNews() {
     const allArticles = [];
     
@@ -331,12 +356,13 @@ async function scrapeNews() {
             
             const $ = cheerio.load(response.data);
             let articlesCount = 0;
+            const processedLinks = new Set();
             
             $('a').each((i, elem) => {
                 const href = $(elem).attr('href');
                 const text = $(elem).text().trim();
                 
-                if (href && text && text.length > 25 && text.length < 180) {
+                if (href && text && text.length > 30 && text.length < 200) {
                     let fullUrl = href;
                     if (!fullUrl.startsWith('http')) {
                         try {
@@ -345,9 +371,13 @@ async function scrapeNews() {
                         } catch(e) { return; }
                     }
                     
+                    // Hindari link yang sama
+                    if (processedLinks.has(fullUrl)) return;
+                    processedLinks.add(fullUrl);
+                    
                     const isWorldCup = /piala dunia|world cup|wc 2026|worldcup|fifa world cup/i.test(text);
                     
-                    if (fullUrl && isWorldCup && !fullUrl.includes('tag/') && !fullUrl.includes('/indeks')) {
+                    if (fullUrl && isWorldCup && !fullUrl.includes('tag/') && !fullUrl.includes('/indeks') && !fullUrl.includes('login') && !fullUrl.includes('register')) {
                         let imageUrl = null;
                         
                         const parent = $(elem).closest('article, .article, .post, .item, .list-item');
@@ -377,17 +407,29 @@ async function scrapeNews() {
                             }
                         }
                         
-                        const category = detectCategory(text);
+                        // Filter judul yang tidak relevan
+                        const excludeWords = ['bonus', 'deposit', 'withdraw', 'slot', 'casino', 'poker', 'togel', 'livechat', 'login', 'daftar'];
+                        let isExcluded = false;
+                        for (const word of excludeWords) {
+                            if (text.toLowerCase().includes(word)) {
+                                isExcluded = true;
+                                break;
+                            }
+                        }
                         
-                        allArticles.push({
-                            title: fixTitle(text),
-                            link: fullUrl,
-                            image: imageUrl,
-                            source: source.name,
-                            category: category,
-                            published_at: new Date().toISOString()
-                        });
-                        articlesCount++;
+                        if (!isExcluded) {
+                            const category = detectCategory(text);
+                            
+                            allArticles.push({
+                                title: fixTitle(text),
+                                link: fullUrl,
+                                image: imageUrl,
+                                source: source.name,
+                                category: category,
+                                published_at: new Date().toISOString()
+                            });
+                            articlesCount++;
+                        }
                     }
                 }
             });
@@ -405,7 +447,7 @@ async function scrapeNews() {
 
 // ============ GOOGLE NEWS SCRAPING ============
 async function scrapeGoogleNews() {
-    const queries = ['piala+dunia+2026', 'world+cup+2026', 'jadwal+piala+dunia+2026'];
+    const queries = ['piala+dunia+2026', 'world+cup+2026', 'jadwal+piala+dunia+2026', 'berita+piala+dunia+2026'];
     const articles = [];
     
     for (const query of queries) {
@@ -420,15 +462,27 @@ async function scrapeGoogleNews() {
                 const link = $(item).find('link').text();
                 const pubDate = $(item).find('pubDate').text();
                 
-                if (title && title.length > 25 && link) {
-                    articles.push({
-                        title: fixTitle(title),
-                        link: link,
-                        image: null,
-                        source: 'Google News',
-                        category: detectCategory(title),
-                        published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString()
-                    });
+                if (title && title.length > 30 && link) {
+                    // Filter judul tidak relevan
+                    const excludeWords = ['bonus', 'deposit', 'withdraw', 'slot', 'casino', 'poker', 'togel'];
+                    let isExcluded = false;
+                    for (const word of excludeWords) {
+                        if (title.toLowerCase().includes(word)) {
+                            isExcluded = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!isExcluded) {
+                        articles.push({
+                            title: fixTitle(title),
+                            link: link,
+                            image: null,
+                            source: 'Google News',
+                            category: detectCategory(title),
+                            published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString()
+                        });
+                    }
                 }
             });
             await sleep(500);
@@ -522,7 +576,7 @@ function fixTitle(title) {
     return fixed.substring(0, 120) || 'Berita Piala Dunia Terbaru';
 }
 
-// ============ BUAT DESKRIPSI (BERSIH, TANPA METADATA DOBEL) ============
+// ============ BUAT DESKRIPSI ============
 function createDescription(title, originalContent, category) {
     const titleClean = title.replace(/[!?]+$/, '');
     
@@ -576,7 +630,7 @@ function createDescription(title, originalContent, category) {
     return final.substring(0, 3000);
 }
 
-// ============ UPDATE BERITA (HANYA BERITA TERBARU) ============
+// ============ UPDATE BERITA (ANTI DUPLIKAT) ============
 async function updateNews() {
     const now = getWIB();
     console.log('\n' + '='.repeat(55));
@@ -595,10 +649,11 @@ async function updateNews() {
     console.log(`  Google News: ${googleArticles.length} berita`);
     allArticles.push(...webArticles, ...googleArticles);
     
+    // Filter unik berdasarkan judul
     const unique = [];
     const seen = new Set();
     for (const article of allArticles) {
-        const key = article.title.substring(0, 60);
+        const key = article.title.substring(0, 80).toLowerCase().replace(/[^\w\s]/gi, '');
         if (!seen.has(key)) {
             seen.add(key);
             unique.push(article);
@@ -606,31 +661,30 @@ async function updateNews() {
     }
     
     console.log(`\n📊 TOTAL BERITA UNIK: ${unique.length}`);
+    
+    // Urutkan berdasarkan waktu
     unique.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
     
+    // Ambil 10 berita terbaru
     const latestNews = unique.slice(0, 10);
     console.log(`\n📋 MENGAMBIL ${latestNews.length} BERITA TERBARU...`);
     
     let saved = 0;
-    let targetCount = Math.min(latestNews.length, 2);
+    let duplicateCount = 0;
+    let imageFailCount = 0;
     
-    console.log(`\n📝 TARGET: ${targetCount} berita per jam\n`);
+    console.log(`\n📝 TARGET: 1-2 berita per jam (ANTI DUPLIKAT)\n`);
     
     for (const article of latestNews) {
         if (saved >= 2) break;
         
         const category = detectCategory(article.title);
         
-        const exists = await new Promise((resolve) => {
-            db.get(
-                `SELECT id FROM news WHERE title LIKE ? AND published_at > datetime('now', '-24 hours')`,
-                [`%${article.title.substring(0, 40)}%`],
-                (err, row) => resolve(row)
-            );
-        });
+        // CEK DUPLIKAT LENGKAP
+        const isDuplicateNews = await isDuplicate(article.title, article.link, category);
         
-        if (exists) {
-            console.log(`  ⏭️ [LEWATI - SUDAH ADA] ${article.title.substring(0, 50)}...`);
+        if (isDuplicateNews) {
+            duplicateCount++;
             continue;
         }
         
@@ -638,6 +692,7 @@ async function updateNews() {
         
         let content = null;
         if (article.link) {
+            console.log(`      🔗 Mengambil konten...`);
             content = await scrapeArticleContent(article.link);
             await sleep(300);
         }
@@ -658,6 +713,7 @@ async function updateNews() {
         
         if (!imageFile) {
             console.log(`      ❌ GAGAL gambar - berita dilewati`);
+            imageFailCount++;
             continue;
         }
         
@@ -692,6 +748,8 @@ async function updateNews() {
     console.log('\n' + '='.repeat(55));
     console.log(`✅ UPDATE SELESAI!`);
     console.log(`   📰 Berita baru disimpan: ${saved}`);
+    console.log(`   ⏭️ Duplikat tercegah: ${duplicateCount}`);
+    console.log(`   ❌ Gambar gagal: ${imageFailCount}`);
     console.log('='.repeat(55) + '\n');
 }
 
@@ -730,6 +788,10 @@ db.serialize(() => {
         views INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
+    
+    // Tambahkan index untuk mempercepat pengecekan duplikat
+    db.run(`CREATE INDEX IF NOT EXISTS idx_title ON news(title)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_published_at ON news(published_at)`);
     
     db.run(`CREATE TABLE IF NOT EXISTS admin (
         id INTEGER PRIMARY KEY,
@@ -807,22 +869,18 @@ app.post('/api/fetch-news', async (req, res) => {
 });
 
 // ============ ROUTE UNTUK HALAMAN STATIS ============
-// Halaman utama
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Halaman login admin
 app.get('/login.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// Halaman admin panel (dilindungi middleware)
 app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Fallback untuk file statis lainnya
 app.get('*.html', (req, res) => {
     const filePath = path.join(__dirname, req.path);
     if (fs.existsSync(filePath)) {
@@ -839,7 +897,7 @@ app.listen(PORT, async () => {
     console.log(`🔑 Admin: admin / admin123 (Ganti password segera!)`);
     console.log(`🔐 Secret Key: ${ADMIN_SECRET_KEY}`);
     console.log(`📡 SUMBER: Bola.net, Goal.com, Google News`);
-    console.log(`🎯 TARGET: 1-2 berita per jam (HANYA berita terbaru)`);
+    console.log(`🎯 TARGET: 1-2 berita per jam (ANTI DUPLIKAT AKTIF)`);
     console.log(`⏰ UPDATE: Setiap 1 jam (24 jam penuh)\n`);
     
     console.log('📰 Memulai update pertama...\n');
