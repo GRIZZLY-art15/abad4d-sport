@@ -64,23 +64,21 @@ const FOOTBALL_CATEGORIES = {
 
 // ============ KATA KUNCI DILARANG (BERITA LAMA) ============
 const FORBIDDEN_KEYWORDS = [
-    // Tahun lama
     '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015',
     'qatar 2022', 'piala dunia 2022', 'world cup 2022', 'russia 2018',
-    // Kata tidak relevan
     'iklan', 'promo', 'bonus', 'deposit', 'withdraw', 'slot', 'casino', 
     'poker', 'togel', 'livechat', 'login', 'daftar', 'agen bola'
 ];
 
 // ============ SUMBER WEBSITE BERITA BOLA ============
 const NEWS_SOURCES = [
-    { name: 'Bola.net - Terbaru', url: 'https://www.bola.net/', category: 'Berita Umum' },
+    { name: 'Bola.net - Terbaru', url: 'https://www.bola.net/', category: 'Berita Bola' },
     { name: 'Bola.net - Liga Inggris', url: 'https://www.bola.net/inggris/', category: 'Liga Inggris' },
     { name: 'Bola.net - Liga Champions', url: 'https://www.bola.net/champions/', category: 'Liga Champions' },
     { name: 'Bola.net - Spanyol', url: 'https://www.bola.net/spanyol/', category: 'Liga Spanyol' },
     { name: 'Bola.net - Italia', url: 'https://www.bola.net/italia/', category: 'Liga Italia' },
     { name: 'Bola.net - Indonesia', url: 'https://www.bola.net/indonesia/', category: 'Liga Indonesia' },
-    { name: 'Goal.com Indonesia', url: 'https://www.goal.com/id/berita', category: 'Berita Umum' }
+    { name: 'Goal.com Indonesia', url: 'https://www.goal.com/id/berita', category: 'Berita Bola' }
 ];
 
 // ============ MIDDLEWARE ============
@@ -168,14 +166,12 @@ app.get('/api/admin/verify', (req, res) => {
 function isRecentFootballNews(title, publishedAt) {
     const titleLower = title.toLowerCase();
     
-    // 1. Cek keyword terlarang (berita lama / tidak relevan)
     for (const forbidden of FORBIDDEN_KEYWORDS) {
         if (titleLower.includes(forbidden)) {
             return false;
         }
     }
     
-    // 2. Pastikan berita sepakbola
     const footballKeywords = [
         'sepakbola', 'bola', 'liga', 'piala', 'champions', 'premier', 'serie', 
         'bundesliga', 'ligue', 'persija', 'persib', 'timnas', 'madrid', 
@@ -192,19 +188,14 @@ function isRecentFootballNews(title, publishedAt) {
         }
     }
     
-    if (!isFootball) {
-        return false;
-    }
+    if (!isFootball) return false;
     
-    // 3. Cek tanggal (hanya berita 3 hari terakhir untuk tetap update)
     if (publishedAt) {
         const newsDate = new Date(publishedAt);
         const threeDaysAgo = new Date();
         threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
         
-        if (newsDate < threeDaysAgo) {
-            return false;
-        }
+        if (newsDate < threeDaysAgo) return false;
     }
     
     return true;
@@ -394,11 +385,9 @@ async function extractImageFromArticle(url) {
     }
 }
 
-// ============ SCRAPING BERITA (SEMUA KATEGORI) ============
+// ============ SCRAPING BERITA ============
 async function scrapeNews() {
     const allArticles = [];
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     
     for (const source of NEWS_SOURCES) {
         try {
@@ -432,7 +421,6 @@ async function scrapeNews() {
                     if (processedLinks.has(fullUrl)) return;
                     processedLinks.add(fullUrl);
                     
-                    // Filter berita sepakbola terbaru
                     const isValid = isRecentFootballNews(text, new Date().toISOString());
                     
                     if (fullUrl && isValid && !fullUrl.includes('tag/') && !fullUrl.includes('/indeks') && 
@@ -624,7 +612,6 @@ function fixTitle(title) {
 function createDescription(title, originalContent, category) {
     const titleClean = title.replace(/[!?]+$/, '');
     
-    // ============ PEMBUKA YANG MENARIK ============
     const openingPhrases = [
         `⚽ ${titleClean}\n\nKabar terbaru dari dunia sepakbola datang hari ini. `,
         `📰 ${titleClean}\n\nBreaking news! `,
@@ -634,15 +621,13 @@ function createDescription(title, originalContent, category) {
     const randomOpening = openingPhrases[Math.floor(Math.random() * openingPhrases.length)];
     
     let main = originalContent || '';
-    
-    // Bersihkan metadata
     main = main.replace(/Diperbarui.*?WIB/gi, '');
     main = main.replace(/Diterbitkan.*?WIB/gi, '');
     main = main.replace(/Updated.*?\./gi, '');
     main = main.replace(/Published.*?\./gi, '');
     main = main.trim();
     
-    // ============ KONTEN DEFAULT YANG PANJANG (1000+ KATA) ============
+    // KONTEN PANJANG PER KATEGORI
     let longContent = '';
     
     switch(category) {
@@ -739,7 +724,7 @@ function createDescription(title, originalContent, category) {
             `Ikuti terus update berita sepakbola terbaru hanya di ABAD4D SPORT. Dapatkan informasi akurat, cepat, dan terpercaya seputar dunia sepakbola.\n\n`;
     }
     
-    // ============ FAKTA MENARIK ============
+    // FAKTA MENARIK
     const interestingFacts = [
         `\n📌 **TAHUKAH ANDA?** Lapangan sepakbola profesional memiliki ukuran standar antara 100-110 meter panjang dan 64-75 meter lebar.\n\n`,
         `\n📌 **TAHUKAH ANDA?** Wasit dalam pertandingan sepakbola profesional berlari rata-rata 10-12 kilometer per pertandingan.\n\n`,
@@ -754,27 +739,26 @@ function createDescription(title, originalContent, category) {
     ];
     const randomFact = interestingFacts[Math.floor(Math.random() * interestingFacts.length)];
     
-    // ============ KUTIPAN TOKOH ============
+    // KUTIPAN
     const quotes = [
         `\n"Sepakbola adalah olahraga paling indah di dunia." - Pele\n\n`,
-        `"\n"Kesuksesan bukanlah kebetulan. Ini adalah kerja keras, ketekunan, belajar, berkorban, dan yang terpenting, cinta pada apa yang Anda lakukan." - Pelé\n\n`,
-        `"\n"Saya tidak memiliki bakat yang luar biasa. Saya hanya memiliki rasa ingin tahu yang besar." - Albert Einstein (penggemar sepakbola)\n\n`,
-        `"\n"Sepakbola adalah tentang kebahagiaan." - Ronaldinho\n\n`,
-        `"\n"Gol adalah emosi. Assist adalah seni." - Zinedine Zidane\n\n`,
+        `\n"Kesuksesan bukanlah kebetulan. Ini adalah kerja keras, ketekunan, belajar, berkorban, dan yang terpenting, cinta pada apa yang Anda lakukan." - Pelé\n\n`,
+        `\n"Saya tidak memiliki bakat yang luar biasa. Saya hanya memiliki rasa ingin tahu yang besar." - Albert Einstein\n\n`,
+        `\n"Sepakbola adalah tentang kebahagiaan." - Ronaldinho\n\n`,
+        `\n"Gol adalah emosi. Assist adalah seni." - Zinedine Zidane\n\n`,
     ];
     const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
     
-    // ============ PENUTUP ============
+    // PENUTUP
     const closing = `\n\n✨ **ABAD4D SPORT** ✨\n\n` +
         `Ikuti terus ABAD4D SPORT untuk berita sepakbola terupdate dan terpercaya. Dapatkan informasi terkini seputar jadwal, hasil, transfer, cedera pemain, dan analisis mendalam hanya di ABAD4D SPORT.\n\n` +
         `📱 **Ikuti Juga Media Sosial Kami:**\n` +
-        `• WhatsApp Official: ${ADMIN_SECRET_KEY.substring(0,20)}...\n` +
+        `• WhatsApp Official: 0812-3456-7890\n` +
         `• Telegram: @abad4d\n` +
         `• Live Chat 24 Jam: Tersedia di website\n\n` +
-        `Jangan lupa bagikan artikel ini ke sesama pecinta sepakbola! 🇮🇩⚽🏆\n\n` +
+        `Jangan lupa bagikan artikel ini ke sesama pecinta sepakbola!\n\n` +
         `#ABAD4DSPORT #BeritaBola #${category.replace(/ /g, '')} #SepakbolaDunia #TransferPemain #HasilPertandingan #JadwalBola`;
     
-    // ============ GABUNGKAN SEMUA ============
     let finalContent = '';
     
     if (main && main.length > 100) {
@@ -783,13 +767,11 @@ function createDescription(title, originalContent, category) {
         finalContent = randomOpening + longContent + randomFact + randomQuote + closing;
     }
     
-    // Bersihkan dari emoji dan karakter aneh
     finalContent = finalContent.replace(/[\u{1F600}-\u{1F6FF}]/gu, '');
     finalContent = finalContent.replace(/Piala Dunia 2022/g, 'Piala Dunia 2026');
     finalContent = finalContent.replace(/Qatar/g, 'Amerika Serikat, Meksiko, dan Kanada');
     finalContent = finalContent.replace(/\s+/g, ' ');
     
-    // Panjang konten minimal 3000 karakter, maksimal 8000
     if (finalContent.length < 3000) {
         finalContent += '\n\n' + interestingFacts[Math.floor(Math.random() * interestingFacts.length)];
     }
@@ -816,7 +798,6 @@ async function updateNews() {
     console.log(`  Google News: ${googleArticles.length} berita terbaru`);
     allArticles.push(...webArticles, ...googleArticles);
     
-    // Filter unik berdasarkan judul
     const unique = [];
     const seen = new Set();
     for (const article of allArticles) {
@@ -828,11 +809,8 @@ async function updateNews() {
     }
     
     console.log(`\n📊 TOTAL BERITA UNIK: ${unique.length}`);
-    
-    // Urutkan berdasarkan waktu (terbaru dulu)
     unique.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
     
-    // Hanya ambil 5 berita terbaru untuk diproses
     const latestNews = unique.slice(0, 5);
     console.log(`\n📋 MENGAMBIL ${latestNews.length} BERITA TERBARU (maksimal 3 hari)...`);
     
@@ -848,13 +826,11 @@ async function updateNews() {
         
         const category = detectCategory(article.title);
         
-        // Validasi ulang (filter ketat)
         if (!isRecentFootballNews(article.title, article.published_at)) {
             rejectedCount++;
             continue;
         }
         
-        // Cek duplikat
         const isDuplicateNews = await isDuplicate(article.title, article.link);
         
         if (isDuplicateNews) {
@@ -1072,6 +1048,7 @@ app.listen(PORT, async () => {
     console.log(`📡 SUMBER: Bola.net, Goal.com, Google News`);
     console.log(`🏆 KATEGORI: Piala Dunia 2026, Liga Champions, Liga Inggris, Liga Spanyol, Liga Italia, Bundesliga, Ligue 1, Liga Indonesia, Transfer Pemain, Hasil Pertandingan, Jadwal, Cedera, Berita Klub`);
     console.log(`📅 BATAS WAKTU: Maksimal 3 hari dari sekarang`);
+    console.log(`📝 DESKRIPSI: 1000-8000 karakter (detail dengan fakta & kutipan)`);
     console.log(`⏰ UPDATE: Setiap 1 jam\n`);
     
     console.log('📰 Memulai update pertama...\n');
