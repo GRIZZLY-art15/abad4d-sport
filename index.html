@@ -7,7 +7,7 @@
     <meta name="description" content="ABAD4D SPORT - Portal berita Piala Dunia 2026 dengan update jadwal, hasil, dan analisis mendalam seputar World Cup 2026 di Amerika Serikat, Meksiko, dan Kanada.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- FAVICON - DIPERBAIKI -->
+    <!-- FAVICON -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://the.splg.site/images/2026/04/09/fw.png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://the.splg.site/images/2026/04/09/fw.png">
     <link rel="apple-touch-icon" sizes="180x180" href="https://the.splg.site/images/2026/04/09/fw.png">
@@ -73,7 +73,7 @@
             text-transform: uppercase;
         }
 
-        /* Header Navbar - DIPERBAIKI UNTUK MOBILE */
+        /* Header Navbar */
         .navbar {
             position: sticky;
             top: 0;
@@ -134,7 +134,7 @@
             color: #C9A03D;
         }
 
-        /* Hero Section - DIPERBAIKI UNTUK MOBILE */
+        /* Hero Section */
         .hero {
             position: relative;
             min-height: 70vh;
@@ -227,7 +227,7 @@
             color: #8E9AAF;
         }
 
-        /* ============ SLIDESHOW STYLES - RESPONSIVE ============ */
+        /* ============ SLIDESHOW STYLES - DIPERBAIKI UNTUK MOBILE ============ */
         .slideshow-container {
             max-width: 100%;
             margin: 20px auto 0;
@@ -235,6 +235,7 @@
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: #1a1f2a;
         }
         .slide {
             display: none;
@@ -244,8 +245,33 @@
         .slide img {
             width: 100%;
             height: auto;
-            aspect-ratio: 16 / 9;
+            display: block;
             object-fit: cover;
+        }
+        /* Ukuran gambar slideshow untuk berbagai device */
+        @media (max-width: 480px) {
+            .slide img {
+                aspect-ratio: 16 / 9;
+                max-height: 220px;
+            }
+        }
+        @media (min-width: 481px) and (max-width: 768px) {
+            .slide img {
+                aspect-ratio: 16 / 9;
+                max-height: 280px;
+            }
+        }
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .slide img {
+                aspect-ratio: 16 / 9;
+                max-height: 350px;
+            }
+        }
+        @media (min-width: 1025px) {
+            .slide img {
+                aspect-ratio: 16 / 9;
+                max-height: 450px;
+            }
         }
         .slide-caption {
             position: absolute;
@@ -253,16 +279,16 @@
             left: 0;
             right: 0;
             background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            padding: 15px;
+            padding: 12px;
             text-align: center;
         }
         .slide-caption h3 {
-            font-size: 1rem;
-            margin-bottom: 5px;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
             color: #C9A03D;
         }
         .slide-caption p {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #fff;
         }
         /* Tombol navigasi */
@@ -271,11 +297,11 @@
             position: absolute;
             top: 50%;
             width: auto;
-            padding: 12px;
-            margin-top: -22px;
+            padding: 10px;
+            margin-top: -20px;
             color: white;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 14px;
             transition: 0.6s ease;
             border-radius: 0 3px 3px 0;
             user-select: none;
@@ -292,7 +318,7 @@
         /* Indikator dot */
         .dots-container {
             text-align: center;
-            padding: 12px 0;
+            padding: 10px 0;
             background: rgba(0,0,0,0.3);
         }
         .dot {
@@ -347,7 +373,7 @@
             margin: 10px auto 0;
         }
 
-        /* Filter Tabs - DIPERBAIKI UNTUK MOBILE */
+        /* Filter Tabs */
         .filter-tabs {
             display: flex;
             flex-wrap: wrap;
@@ -376,7 +402,7 @@
             border-color: #C9A03D;
         }
 
-        /* Featured Grid - RESPONSIVE */
+        /* Featured Grid */
         .featured-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -426,7 +452,7 @@
             color: #8E9AAF;
         }
 
-        /* News Grid - RESPONSIVE */
+        /* News Grid */
         .news-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -478,7 +504,7 @@
             line-height: 1.5;
         }
 
-        /* Info Cards - RESPONSIVE */
+        /* Info Cards */
         .info-strip {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -507,7 +533,7 @@
             color: #8E9AAF;
         }
 
-        /* Modal - RESPONSIVE */
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -596,7 +622,7 @@
             color: #6F7C91;
         }
 
-        /* ============ STICKY SOCIAL MEDIA SHARE ============ */
+        /* Sticky Social Media Share */
         .sticky-share {
             position: fixed;
             left: 10px;
@@ -620,16 +646,14 @@
             text-decoration: none;
             color: white;
         }
-        .share-btn:hover {
-            transform: scale(1.05);
-        }
+        .share-btn:hover { transform: scale(1.05); }
         .share-btn-wa { background: #25D366; }
         .share-btn-fb { background: #1877F2; }
         .share-btn-twitter { background: #1DA1F2; }
         .share-btn-telegram { background: #0088cc; }
         .share-btn i { font-size: 1rem; }
 
-        /* ============ FLOATING BUTTON ============ */
+        /* Floating Button */
         .floating-btn-container {
             position: fixed;
             bottom: 15px;
@@ -708,6 +732,8 @@
             .filter-tabs { gap: 10px; }
             .tab-btn { padding: 7px 18px; font-size: 0.75rem; }
             .container { padding: 40px 20px; }
+            .slide-caption h3 { font-size: 1.1rem; }
+            .slide-caption p { font-size: 0.75rem; }
         }
 
         /* DESKTOP (1024px ke atas) */
@@ -717,7 +743,8 @@
             .news-grid { grid-template-columns: repeat(3, 1fr); }
             .featured-img { height: 240px; }
             .news-img { height: 180px; }
-            .slide img { height: auto; }
+            .slide-caption h3 { font-size: 1.3rem; }
+            .slide-caption p { font-size: 0.85rem; }
         }
 
         /* MOBILE KECIL (di bawah 480px) */
@@ -732,6 +759,10 @@
             .hero-badge { font-size: 0.55rem; }
             .filter-tabs { gap: 6px; }
             .tab-btn { padding: 4px 10px; font-size: 0.6rem; }
+            .slide-caption { padding: 8px; }
+            .slide-caption h3 { font-size: 0.7rem; }
+            .slide-caption p { font-size: 0.55rem; }
+            .prev, .next { padding: 6px; font-size: 10px; margin-top: -15px; }
         }
     </style>
 </head>
@@ -779,16 +810,28 @@
     </div>
 </section>
 
-<!-- ============ SLIDESHOW 3 FOTO ============ -->
+<!-- ============ SLIDESHOW 3 FOTO (UKURAN SUDAH DIPERBAIKI UNTUK MOBILE) ============ -->
 <div class="slideshow-container">
     <div class="slide fade">
         <img src="https://the.splg.site/images/2026/04/09/bg2.jpeg" alt="World Cup 2026 Stadium">
+        <div class="slide-caption">
+            <h3>🏟️ 16 Stadion Megah</h3>
+            <p>MetLife Stadium, SoFi Stadium, AT&T Stadium siap menyambut Piala Dunia 2026</p>
+        </div>
     </div>
     <div class="slide fade">
         <img src="https://the.splg.site/images/2026/04/09/bg3.jpeg" alt="World Cup Trophy">
+        <div class="slide-caption">
+            <h3>🏆 Trofi Piala Dunia</h3>
+            <p>48 tim terbaik dunia berlomba meraih trofi bergengsi di Amerika Serikat, Meksiko, dan Kanada</p>
+        </div>
     </div>
     <div class="slide fade">
         <img src="https://the.splg.site/images/2026/04/09/WORLD-CUP-2026.jpeg" alt="World Cup Fans">
+        <div class="slide-caption">
+            <h3>🌍 Suporter Seluruh Dunia</h3>
+            <p>Miliaran pasang mata akan menyaksikan pesta sepakbola terbesar di dunia tahun 2026</p>
+        </div>
     </div>
 
     <!-- Tombol navigasi -->
@@ -849,7 +892,7 @@
     </div>
 </div>
 
-<!-- ============ STICKY SOCIAL MEDIA SHARE ============ -->
+<!-- Sticky Social Media Share -->
 <div class="sticky-share">
     <a href="#" class="share-btn share-btn-wa" data-tooltip="Share via WhatsApp" onclick="shareWA(); return false;">
         <i class="fab fa-whatsapp"></i>
@@ -865,7 +908,7 @@
     </a>
 </div>
 
-<!-- ============ FLOATING BUTTON DENGAN POPUP MENU ============ -->
+<!-- Floating Button dengan Popup Menu -->
 <div class="floating-btn-container">
     <div class="contact-popup" id="contactPopup">
         <div class="contact-item" onclick="toggleSubmenu('hubungiSubmenu')">
