@@ -19,66 +19,42 @@ process.env.TZ = 'Asia/Jakarta';
 const ADMIN_SECRET_KEY = 'ABAD4D_SPORT_SUPER_SECRET_2026_XYZ123';
 const ADMIN_USERNAME = 'admin';
 
-// ============ KATEGORI SEPAKBOLA LENGKAP ============
-const FOOTBALL_CATEGORIES = {
+// ============ KATEGORI PIALA DUNIA ============
+const WORLD_CUP_CATEGORIES = {
+    'Berita Umum': {
+        keywords: []
+    },
     'Piala Dunia 2026': {
-        keywords: ['piala dunia 2026', 'world cup 2026', 'usa 2026', 'mexico 2026', 'canada 2026', 'wc 2026']
+        keywords: [
+            'piala dunia 2026', 'world cup 2026', 'usa 2026', 'mexico 2026', 'canada 2026',
+            'fifa world cup 2026', 'wc 2026'
+        ]
     },
-    'Liga Champions': {
-        keywords: ['champions league', 'liga champions', 'ucl', 'uefa champions league']
+    'Jadwal Piala Dunia': {
+        keywords: ['jadwal piala dunia', 'schedule world cup', 'world cup match', 'world cup 2026 schedule']
     },
-    'Liga Inggris': {
-        keywords: ['premier league', 'liga inggris', 'manchester united', 'liverpool', 'arsenal', 'chelsea', 'manchester city', 'tottenham']
+    'Grup Piala Dunia': {
+        keywords: ['grup piala dunia', 'world cup groups', 'draw piala dunia', 'pembagian grup']
     },
-    'Liga Spanyol': {
-        keywords: ['la liga', 'real madrid', 'barcelona', 'atletico madrid']
+    'Bintang Piala Dunia': {
+        keywords: ['bintang piala dunia', 'world cup stars', 'mbappe', 'messi', 'haaland', 'ronaldo']
     },
-    'Liga Italia': {
-        keywords: ['serie a', 'juventus', 'inter milan', 'ac milan', 'napoli', 'roma']
-    },
-    'Bundesliga': {
-        keywords: ['bundesliga', 'bayern munich', 'borussia dortmund']
-    },
-    'Ligue 1': {
-        keywords: ['ligue 1', 'psg', 'paris saint germain', 'marseille']
-    },
-    'Liga Indonesia': {
-        keywords: ['liga 1', 'persija', 'persib', 'arema', 'timnas indonesia', 'pssi']
-    },
-    'Transfer Pemain': {
-        keywords: ['transfer', 'resmi', 'gabung', 'pindah', 'rekrut', 'datangkan', 'perpanjang kontrak', 'kontrak baru']
+    'Tim Lolos Piala Dunia': {
+        keywords: ['tim lolos piala dunia', 'qualified teams', 'lolos ke piala dunia', 'tiket piala dunia']
     },
     'Hasil Pertandingan': {
-        keywords: ['hasil', 'skor', 'menang', 'kalah', 'imbang', 'laga', 'big match']
+        keywords: ['hasil piala dunia', 'world cup result', 'skor piala dunia', 'hasil pertandingan']
     },
-    'Jadwal Pertandingan': {
-        keywords: ['jadwal', 'schedule', 'match', 'pertandingan']
-    },
-    'Cedera Pemain': {
-        keywords: ['cedera', 'injury', 'absensi', 'pemain cedera']
-    },
-    'Berita Klub': {
-        keywords: ['kabar klub', 'berita klub', 'official', 'resmi klub']
+    'Sejarah Piala Dunia': {
+        keywords: ['sejarah piala dunia', 'history world cup', 'juara piala dunia', 'world cup winners']
     }
 };
 
-// ============ KATA KUNCI DILARANG (BERITA LAMA) ============
-const FORBIDDEN_KEYWORDS = [
-    '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015',
-    'qatar 2022', 'piala dunia 2022', 'world cup 2022', 'russia 2018',
-    'iklan', 'promo', 'bonus', 'deposit', 'withdraw', 'slot', 'casino', 
-    'poker', 'togel', 'livechat', 'login', 'daftar', 'agen bola'
-];
-
-// ============ SUMBER WEBSITE BERITA BOLA ============
+// ============ SUMBER WEBSITE BERITA PIALA DUNIA ============
 const NEWS_SOURCES = [
-    { name: 'Bola.net - Terbaru', url: 'https://www.bola.net/', category: 'Berita Bola' },
-    { name: 'Bola.net - Liga Inggris', url: 'https://www.bola.net/inggris/', category: 'Liga Inggris' },
-    { name: 'Bola.net - Liga Champions', url: 'https://www.bola.net/champions/', category: 'Liga Champions' },
-    { name: 'Bola.net - Spanyol', url: 'https://www.bola.net/spanyol/', category: 'Liga Spanyol' },
-    { name: 'Bola.net - Italia', url: 'https://www.bola.net/italia/', category: 'Liga Italia' },
-    { name: 'Bola.net - Indonesia', url: 'https://www.bola.net/indonesia/', category: 'Liga Indonesia' },
-    { name: 'Goal.com Indonesia', url: 'https://www.goal.com/id/berita', category: 'Berita Bola' }
+    { name: 'Bola.net - Piala Dunia', url: 'https://www.bola.net/tag/piala-dunia/', category: 'Piala Dunia 2026' },
+    { name: 'Bola.net - World Cup', url: 'https://www.bola.net/tag/world-cup/', category: 'Piala Dunia 2026' },
+    { name: 'Goal.com World Cup', url: 'https://www.goal.com/id/berita/piala-dunia', category: 'Piala Dunia 2026' }
 ];
 
 // ============ MIDDLEWARE ============
@@ -162,128 +138,23 @@ app.get('/api/admin/verify', (req, res) => {
     }
 });
 
-// ============ BACKUP & RESTORE DATABASE (AGAR DATA TIDAK HILANG) ============
-const BACKUP_FILE = 'backup-news.json';
-
-async function backupDatabase() {
-    try {
-        const news = await new Promise((resolve) => {
-            db.all('SELECT * FROM news ORDER BY id DESC', (err, rows) => {
-                resolve(rows || []);
-            });
-        });
-        
-        fs.writeFileSync(BACKUP_FILE, JSON.stringify(news, null, 2));
-        console.log(`💾 Backup database: ${news.length} berita tersimpan`);
-    } catch (error) {
-        console.log(`⚠️ Backup gagal: ${error.message}`);
-    }
-}
-
-async function restoreDatabase() {
-    try {
-        if (fs.existsSync(BACKUP_FILE)) {
-            const backup = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
-            
-            if (backup.length > 0) {
-                // Cek apakah database kosong
-                const count = await new Promise((resolve) => {
-                    db.get('SELECT COUNT(*) as count FROM news', (err, row) => {
-                        resolve(row ? row.count : 0);
-                    });
-                });
-                
-                if (count === 0) {
-                    for (const news of backup) {
-                        await new Promise((resolve) => {
-                            db.run(
-                                `INSERT OR IGNORE INTO news (id, title, content, image, category, status, published_at, views, created_at)
-                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                                [news.id, news.title, news.content, news.image, news.category, news.status, news.published_at, news.views || 0, news.created_at],
-                                (err) => resolve()
-                            );
-                        });
-                    }
-                    console.log(`🔄 Restore database: ${backup.length} berita dipulihkan`);
-                }
-            }
-        }
-    } catch (error) {
-        console.log(`⚠️ Restore gagal: ${error.message}`);
-    }
-}
-
-// ============ FILTER BERITA TERBARU (HANYA 7 HARI) ============
-function isRecentFootballNews(title, publishedAt) {
-    const titleLower = title.toLowerCase();
-    
-    for (const forbidden of FORBIDDEN_KEYWORDS) {
-        if (titleLower.includes(forbidden)) {
-            return false;
-        }
-    }
-    
-    const footballKeywords = [
-        'sepakbola', 'bola', 'liga', 'piala', 'champions', 'premier', 'serie', 
-        'bundesliga', 'ligue', 'persija', 'persib', 'timnas', 'madrid', 
-        'barcelona', 'manchester', 'liverpool', 'juventus', 'inter', 'milan', 
-        'psg', 'bayern', 'transfer', 'resmi', 'gabung', 'hasil', 'skor', 
-        'menang', 'kalah', 'jadwal', 'cedera', 'pelatih', 'klub'
-    ];
-    
-    let isFootball = false;
-    for (const keyword of footballKeywords) {
-        if (titleLower.includes(keyword)) {
-            isFootball = true;
-            break;
-        }
-    }
-    
-    if (!isFootball) return false;
-    
-    if (publishedAt) {
-        const newsDate = new Date(publishedAt);
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        
-        if (newsDate < sevenDaysAgo) return false;
-    }
-    
-    return true;
-}
-
 // ============ DETEKSI KATEGORI ============
 function detectCategory(title) {
     const titleLower = title.toLowerCase();
+    const order = ['Jadwal Piala Dunia', 'Hasil Pertandingan', 'Grup Piala Dunia', 'Tim Lolos Piala Dunia', 'Bintang Piala Dunia', 'Sejarah Piala Dunia', 'Piala Dunia 2026'];
     
-    for (const [category, config] of Object.entries(FOOTBALL_CATEGORIES)) {
-        for (const keyword of config.keywords) {
+    for (const category of order) {
+        const keywords = WORLD_CUP_CATEGORIES[category].keywords;
+        for (const keyword of keywords) {
             if (titleLower.includes(keyword)) {
                 return category;
             }
         }
     }
-    return 'Berita Bola';
+    return 'Berita Umum';
 }
 
-// ============ CEK DUPLIKAT ============
-async function isDuplicate(title, link) {
-    return new Promise((resolve) => {
-        const cleanTitle = title.toLowerCase().replace(/[^\w\s]/gi, '').substring(0, 80);
-        
-        db.get(
-            `SELECT id FROM news WHERE 
-                (LOWER(REPLACE(REPLACE(title, '?', ''), '!', '')) LIKE ?) OR 
-                (published_at > datetime('now', '-6 hours'))`,
-            [`%${cleanTitle}%`],
-            (err, row) => {
-                resolve(!!row);
-            }
-        );
-    });
-}
-
-// ============ CLEAN CONTENT ============
+// ============ CLEAN CONTENT (BERSIHKAN METADATA) ============
 function cleanContent(content) {
     if (!content) return '';
     
@@ -305,7 +176,13 @@ function cleanContent(content) {
         /[\d]+ Jam yang lalu/gi, /[\d]+ Menit yang lalu/gi, /[\d]+ Hari yang lalu/gi,
         /Diterbitkan:.*?(?=\.|$)/gi, /Diperbarui:.*?(?=\.|$)/gi,
         /Published:.*?(?=\.|$)/gi, /Updated:.*?(?=\.|$)/gi, /Tanggal:.*?(?=\.|$)/gi,
-        /Rabu|Kamis|Jumat|Sabtu|Minggu|Senin|Selasa,\s*\d{1,2}\s+[A-Za-z]+\s+\d{4}/gi,
+        /Rabu, \d{1,2} [A-Za-z]+ \d{4} \d{2}:\d{2} WIB/gi,
+        /Kamis, \d{1,2} [A-Za-z]+ \d{4} \d{2}:\d{2} WIB/gi,
+        /Jumat, \d{1,2} [A-Za-z]+ \d{4} \d{2}:\d{2} WIB/gi,
+        /Sabtu, \d{1,2} [A-Za-z]+ \d{4} \d{2}:\d{2} WIB/gi,
+        /Minggu, \d{1,2} [A-Za-z]+ \d{4} \d{2}:\d{2} WIB/gi,
+        /Senin, \d{1,2} [A-Za-z]+ \d{4} \d{2}:\d{2} WIB/gi,
+        /Selasa, \d{1,2} [A-Za-z]+ \d{4} \d{2}:\d{2} WIB/gi,
         /\d{1,2}\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+\d{4}/gi
     ];
     
@@ -321,7 +198,7 @@ function cleanContent(content) {
     return clean;
 }
 
-// ============ DOWNLOAD GAMBAR ============
+// ============ FUNGSI DOWNLOAD GAMBAR ============
 async function downloadImage(imageUrl, retryCount = 0) {
     if (!imageUrl || !imageUrl.startsWith('http')) return null;
     
@@ -394,7 +271,7 @@ async function downloadImage(imageUrl, retryCount = 0) {
     }
 }
 
-// ============ AMBIL GAMBAR DARI LINK ARTIKEL ============
+// ============ AMBIL GAMBAR DARI LINK ARTIKEL (FALLBACK) ============
 async function extractImageFromArticle(url) {
     if (!url) return null;
     
@@ -454,13 +331,12 @@ async function scrapeNews() {
             
             const $ = cheerio.load(response.data);
             let articlesCount = 0;
-            const processedLinks = new Set();
             
             $('a').each((i, elem) => {
                 const href = $(elem).attr('href');
                 const text = $(elem).text().trim();
                 
-                if (href && text && text.length > 25 && text.length < 200) {
+                if (href && text && text.length > 25 && text.length < 180) {
                     let fullUrl = href;
                     if (!fullUrl.startsWith('http')) {
                         try {
@@ -469,14 +345,9 @@ async function scrapeNews() {
                         } catch(e) { return; }
                     }
                     
-                    if (processedLinks.has(fullUrl)) return;
-                    processedLinks.add(fullUrl);
+                    const isWorldCup = /piala dunia|world cup|wc 2026|worldcup|fifa world cup/i.test(text);
                     
-                    const isValid = isRecentFootballNews(text, new Date().toISOString());
-                    
-                    if (fullUrl && isValid && !fullUrl.includes('tag/') && !fullUrl.includes('/indeks') && 
-                        !fullUrl.includes('login') && !fullUrl.includes('register')) {
-                        
+                    if (fullUrl && isWorldCup && !fullUrl.includes('tag/') && !fullUrl.includes('/indeks')) {
                         let imageUrl = null;
                         
                         const parent = $(elem).closest('article, .article, .post, .item, .list-item');
@@ -521,8 +392,8 @@ async function scrapeNews() {
                 }
             });
             
-            console.log(`    ✅ ${articlesCount} berita terbaru`);
-            await sleep(500);
+            console.log(`    ✅ ${articlesCount} berita`);
+            await sleep(800);
             
         } catch (error) {
             console.log(`    ⚠️ Gagal: ${error.message}`);
@@ -534,11 +405,7 @@ async function scrapeNews() {
 
 // ============ GOOGLE NEWS SCRAPING ============
 async function scrapeGoogleNews() {
-    const queries = [
-        'sepakbola+terbaru', 'transfer+pemain+terbaru', 'hasil+pertandingan+sepakbola',
-        'liga+inggris+terbaru', 'liga+spanyol+terbaru', 'liga+italia+terbaru',
-        'champions+league+terbaru', 'bundesliga+terbaru', 'ligue+1+terbaru'
-    ];
+    const queries = ['piala+dunia+2026', 'world+cup+2026', 'jadwal+piala+dunia+2026'];
     const articles = [];
     
     for (const query of queries) {
@@ -548,27 +415,23 @@ async function scrapeGoogleNews() {
             const $ = cheerio.load(response.data, { xmlMode: true });
             
             $('item').each((i, item) => {
-                if (i >= 4) return;
+                if (i >= 3) return;
                 const title = $(item).find('title').text();
                 const link = $(item).find('link').text();
-                let pubDate = $(item).find('pubDate').text();
+                const pubDate = $(item).find('pubDate').text();
                 
                 if (title && title.length > 25 && link) {
-                    const isValid = isRecentFootballNews(title, pubDate);
-                    
-                    if (isValid) {
-                        articles.push({
-                            title: fixTitle(title),
-                            link: link,
-                            image: null,
-                            source: 'Google News',
-                            category: detectCategory(title),
-                            published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString()
-                        });
-                    }
+                    articles.push({
+                        title: fixTitle(title),
+                        link: link,
+                        image: null,
+                        source: 'Google News',
+                        category: detectCategory(title),
+                        published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString()
+                    });
                 }
             });
-            await sleep(300);
+            await sleep(500);
         } catch (error) {}
     }
     
@@ -581,7 +444,7 @@ async function scrapeArticleContent(url) {
     
     try {
         const response = await axios.get(url, {
-            timeout: 8000,
+            timeout: 10000,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
             }
@@ -644,7 +507,7 @@ async function scrapeArticleContent(url) {
 
 // ============ FIX TITLE ============
 function fixTitle(title) {
-    if (!title) return 'Berita Sepakbola Terbaru';
+    if (!title) return 'Berita Piala Dunia Terbaru';
     
     let fixed = title;
     fixed = fixed.replace(/^[^a-zA-Z0-9\s]+/, '');
@@ -656,71 +519,69 @@ function fixTitle(title) {
         fixed = fixed.charAt(0).toUpperCase() + fixed.slice(1);
     }
     
-    return fixed.substring(0, 120) || 'Berita Sepakbola Terbaru';
+    return fixed.substring(0, 120) || 'Berita Piala Dunia Terbaru';
 }
 
-// ============ BUAT DESKRIPSI ============
+// ============ BUAT DESKRIPSI (BERSIH, TANPA METADATA DOBEL) ============
 function createDescription(title, originalContent, category) {
     const titleClean = title.replace(/[!?]+$/, '');
     
     let opening = `${titleClean}\n\n`;
     
     let main = originalContent || '';
+    
     main = main.replace(/Diperbarui.*?WIB/gi, '');
     main = main.replace(/Diterbitkan.*?WIB/gi, '');
+    main = main.replace(/Updated.*?\./gi, '');
+    main = main.replace(/Published.*?\./gi, '');
+    main = main.replace(/\d{1,2}-\d{2} WIB/gi, '');
+    main = main.replace(/\d{1,2}:\d{2} WIB/gi, '');
     main = main.trim();
     
     if (!main || main.length < 100) {
         switch(category) {
             case 'Piala Dunia 2026':
-                main = `Piala Dunia 2026 akan menjadi edisi istimewa karena digelar di tiga negara: Amerika Serikat, Meksiko, dan Kanada. Turnamen ini akan diikuti 48 tim untuk pertama kalinya. Pertandingan pembukaan akan digelar pada 12 Juni 2026 di Stadion Azteca.`;
+                main = `Piala Dunia 2026 akan menjadi edisi istimewa karena digelar di tiga negara: Amerika Serikat, Meksiko, dan Kanada. Turnamen ini akan diikuti 48 tim untuk pertama kalinya. Pertandingan pembukaan akan digelar pada 12 Juni 2026 di Stadion Azteca, Meksiko City. Babak grup akan berlangsung dari 12 Juni hingga 28 Juni 2026. Babak 32 besar dimulai 29 Juni 2026, babak 16 besar pada 3 Juli 2026, perempat final 7 Juli 2026, semi final 11 Juli 2026, dan grand final pada 12 Juli 2026 di MetLife Stadium, New Jersey.`;
                 break;
-            case 'Transfer Pemain':
-                main = `Bursa transfer pemain selalu menjadi momen yang dinanti. Klub-klub besar Eropa mulai bergerak untuk mendatangkan pemain bintang. Ikuti terus perkembangan transfer terbaru hanya di ABAD4D SPORT.`;
+            case 'Jadwal Piala Dunia':
+                main = `Jadwal lengkap Piala Dunia 2026: Babak Grup (12-28 Juni 2026), Babak 32 Besar (29 Juni - 2 Juli 2026), Babak 16 Besar (3-6 Juli 2026), Perempat Final (7-8 Juli 2026), Semi Final (11 Juli 2026), Final (12 Juli 2026 di MetLife Stadium, New Jersey).`;
+                break;
+            case 'Grup Piala Dunia':
+                main = `Sebanyak 48 tim dibagi ke dalam 16 grup pada Piala Dunia 2026. Dua tim teratas dari setiap grup akan lolos ke babak 32 besar. Format baru ini memberikan peluang lebih besar bagi tim-tim underdog.`;
+                break;
+            case 'Bintang Piala Dunia':
+                main = `Para bintang dunia siap meramaikan Piala Dunia 2026: Kylian Mbappe (Prancis), Erling Haaland (Norwegia), Jude Bellingham (Inggris), Vinicius Jr (Brasil), Jamal Musiala (Jerman), dan Pedri (Spanyol). Persaingan merebut Golden Boot diprediksi sangat ketat.`;
+                break;
+            case 'Tim Lolos Piala Dunia':
+                main = `Tim-tim yang telah lolos ke Piala Dunia 2026: Prancis, Inggris, Jerman, Spanyol, Italia, Belanda, Portugal, Brasil, Argentina, Uruguay, Amerika Serikat, Meksiko, Kanada, Jepang, Korea Selatan, Australia, Maroko, Senegal, dan masih banyak lagi. Total 48 tim akan bertanding.`;
                 break;
             case 'Hasil Pertandingan':
-                main = `Hasil pertandingan sepakbola selalu menyajikan drama dan ketegangan hingga menit akhir. Simak skor akhir dan rekap pertandingan hanya di ABAD4D SPORT.`;
+                main = `Hasil pertandingan Piala Dunia 2026 akan terus diperbarui. Setiap laga menyajikan drama dan ketegangan hingga menit akhir. Simak skor akhir dan rekap pertandingan hanya di ABAD4D SPORT.`;
+                break;
+            case 'Sejarah Piala Dunia':
+                main = `Piala Dunia pertama kali digelar pada 1930 di Uruguay. Brasil menjadi negara dengan koleksi trofi terbanyak (5 gelar), diikuti Italia dan Jerman (4 gelar). Piala Dunia 2026 akan menjadi edisi pertama dengan 48 tim.`;
                 break;
             default:
-                main = `Berita terbaru dari dunia sepakbola. ${titleClean} menjadi sorotan utama. Simak update selengkapnya hanya di ABAD4D SPORT.`;
+                main = `Piala Dunia 2026 akan digelar di Amerika Serikat, Meksiko, dan Kanada pada 12 Juni - 12 Juli 2026. Turnamen ini diikuti 48 tim untuk pertama kalinya.`;
         }
     }
     
-    const closing = `\n\nIkuti terus ABAD4D SPORT untuk berita sepakbola terupdate. #ABAD4DSPORT #BeritaBola #${category.replace(/ /g, '')}`;
+    const closing = `\n\nIkuti terus ABAD4D SPORT untuk berita Piala Dunia 2026 terupdate. #PialaDunia2026 #WorldCup2026 #ABAD4DSPORT`;
     
     let final = opening + main + closing;
     final = final.replace(/\s+/g, ' ');
+    final = final.replace(/Piala Dunia 2022/g, 'Piala Dunia 2026');
+    final = final.replace(/Qatar/g, 'Amerika Serikat, Meksiko, dan Kanada');
     
-    return final.substring(0, 2000);
+    return final.substring(0, 3000);
 }
 
-// ============ UPDATE BERITA (POSTING 1 BERITA SETIAP 14 MENIT) ============
-let isUpdating = false;
-let lastPostTime = 0;
-const POST_INTERVAL_MS = 14 * 60 * 1000; // 14 menit
-
+// ============ UPDATE BERITA (HANYA BERITA TERBARU) ============
 async function updateNews() {
     const now = getWIB();
-    const nowMs = Date.now();
-    
-    if (nowMs - lastPostTime < POST_INTERVAL_MS && lastPostTime > 0) {
-        const remaining = Math.round((POST_INTERVAL_MS - (nowMs - lastPostTime)) / 1000);
-        const minutes = Math.floor(remaining / 60);
-        const seconds = remaining % 60;
-        console.log(`\n⏳ ${now} WIB - Post berikutnya: ${minutes}m ${seconds}s lagi`);
-        return;
-    }
-    
-    if (isUpdating) {
-        console.log(`\n⏳ ${now} WIB - Update sedang berjalan...`);
-        return;
-    }
-    
-    isUpdating = true;
-    
-    console.log('\n' + '='.repeat(60));
-    console.log(`⚽ ${now} WIB - POSTING BERITA BARU (Setiap 14 menit)`);
-    console.log('='.repeat(60));
+    console.log('\n' + '='.repeat(55));
+    console.log(`🏆 ${now} WIB - UPDATE BERITA PIALA DUNIA`);
+    console.log('='.repeat(55));
     
     let allArticles = [];
     
@@ -737,7 +598,7 @@ async function updateNews() {
     const unique = [];
     const seen = new Set();
     for (const article of allArticles) {
-        const key = article.title.substring(0, 80).toLowerCase().replace(/[^\w\s]/gi, '');
+        const key = article.title.substring(0, 60);
         if (!seen.has(key)) {
             seen.add(key);
             unique.push(article);
@@ -748,25 +609,35 @@ async function updateNews() {
     unique.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
     
     const latestNews = unique.slice(0, 10);
-    let posted = false;
+    console.log(`\n📋 MENGAMBIL ${latestNews.length} BERITA TERBARU...`);
+    
+    let saved = 0;
+    let targetCount = Math.min(latestNews.length, 2);
+    
+    console.log(`\n📝 TARGET: ${targetCount} berita per jam\n`);
     
     for (const article of latestNews) {
-        if (posted) break;
+        if (saved >= 2) break;
         
         const category = detectCategory(article.title);
         
-        if (!isRecentFootballNews(article.title, article.published_at)) {
+        const exists = await new Promise((resolve) => {
+            db.get(
+                `SELECT id FROM news WHERE title LIKE ? AND published_at > datetime('now', '-24 hours')`,
+                [`%${article.title.substring(0, 40)}%`],
+                (err, row) => resolve(row)
+            );
+        });
+        
+        if (exists) {
+            console.log(`  ⏭️ [LEWATI - SUDAH ADA] ${article.title.substring(0, 50)}...`);
             continue;
         }
-        
-        const isDuplicateNews = await isDuplicate(article.title, article.link);
-        if (isDuplicateNews) continue;
         
         console.log(`\n  📌 [${category}] ${article.title.substring(0, 55)}...`);
         
         let content = null;
         if (article.link) {
-            console.log(`      🔗 Mengambil konten...`);
             content = await scrapeArticleContent(article.link);
             await sleep(300);
         }
@@ -786,7 +657,7 @@ async function updateNews() {
         }
         
         if (!imageFile) {
-            console.log(`      ❌ GAGAL gambar - cari berita lain`);
+            console.log(`      ❌ GAGAL gambar - berita dilewati`);
             continue;
         }
         
@@ -807,12 +678,8 @@ async function updateNews() {
                     if (err) {
                         console.log(`      ❌ Gagal simpan: ${err.message}`);
                     } else {
-                        posted = true;
-                        lastPostTime = Date.now();
-                        console.log(`      ✅ BERITA BERHASIL DIPOSTING!`);
-                        console.log(`      📅 Next post: 14 menit lagi`);
-                        // Backup setelah post berhasil
-                        backupDatabase();
+                        saved++;
+                        console.log(`      ✅ BERITA ${saved} BERHASIL!`);
                     }
                     resolve();
                 }
@@ -822,25 +689,10 @@ async function updateNews() {
         await sleep(500);
     }
     
-    if (!posted) {
-        console.log(`\n⚠️ TIDAK ADA BERITA BARU YANG SIAP DIPOSTING`);
-    }
-    
-    console.log('\n' + '='.repeat(60));
+    console.log('\n' + '='.repeat(55));
     console.log(`✅ UPDATE SELESAI!`);
-    console.log(`   📰 Status: ${posted ? 'BERHASIL POSTING' : 'TIDAK ADA BERITA'}`);
-    console.log(`   💾 Total berita di database: ${await getTotalNews()}`);
-    console.log('='.repeat(60) + '\n');
-    
-    isUpdating = false;
-}
-
-async function getTotalNews() {
-    return new Promise((resolve) => {
-        db.get('SELECT COUNT(*) as count FROM news', (err, row) => {
-            resolve(row ? row.count : 0);
-        });
-    });
+    console.log(`   📰 Berita baru disimpan: ${saved}`);
+    console.log('='.repeat(55) + '\n');
 }
 
 function sleep(ms) {
@@ -872,15 +724,12 @@ db.serialize(() => {
         title TEXT NOT NULL,
         content TEXT NOT NULL,
         image TEXT NOT NULL,
-        category TEXT DEFAULT 'Berita Bola',
+        category TEXT DEFAULT 'Berita Umum',
         status TEXT DEFAULT 'published',
         published_at DATETIME,
         views INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
-    
-    db.run(`CREATE INDEX IF NOT EXISTS idx_title ON news(title)`);
-    db.run(`CREATE INDEX IF NOT EXISTS idx_published_at ON news(published_at)`);
     
     db.run(`CREATE TABLE IF NOT EXISTS admin (
         id INTEGER PRIMARY KEY,
@@ -889,15 +738,11 @@ db.serialize(() => {
     )`);
 });
 
+// Ganti password default dengan yang lebih kuat
 bcrypt.hash('admin123', 10).then(hash => {
     db.run(`INSERT OR IGNORE INTO admin (id, username, password) VALUES (1, 'admin', ?)`, [hash]);
-    console.log('✅ Admin: admin / admin123');
+    console.log('✅ Admin: admin / admin123 (Ganti password setelah login pertama)');
 });
-
-// Restore database setelah koneksi
-setTimeout(() => {
-    restoreDatabase();
-}, 1000);
 
 // ============ API ENDPOINTS ============
 app.post('/api/login', (req, res) => {
@@ -928,14 +773,9 @@ app.post('/api/news', upload.single('image'), (req, res) => {
         return res.status(400).json({ message: 'Judul, isi, dan gambar harus diisi!' });
     }
     db.run('INSERT INTO news (title, content, image, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [fixTitle(title), content, image, category || 'Berita Bola', status || 'published', new Date().toISOString()],
+        [fixTitle(title), content, image, category || 'Berita Umum', status || 'published', new Date().toISOString()],
         function(err) {
-            if (err) {
-                res.status(500).json({ message: 'Gagal menyimpan' });
-            } else {
-                backupDatabase();
-                res.json({ message: 'Berita ditambahkan!', id: this.lastID });
-            }
+            res.json(err ? { message: 'Gagal menyimpan' } : { message: 'Berita ditambahkan!', id: this.lastID });
         });
 });
 
@@ -945,52 +785,44 @@ app.put('/api/news/:id', upload.single('image'), (req, res) => {
     if (req.file) {
         db.run('UPDATE news SET title = ?, content = ?, image = ?, category = ?, status = ? WHERE id = ?',
             [fixTitle(title), content, req.file.filename, category, status, id], (err) => {
-                if (err) res.status(500).json({ message: 'Gagal update' });
-                else {
-                    backupDatabase();
-                    res.json({ message: 'Berita diupdate!' });
-                }
+                res.json(err ? { message: 'Gagal update' } : { message: 'Berita diupdate!' });
             });
     } else {
         db.run('UPDATE news SET title = ?, content = ?, category = ?, status = ? WHERE id = ?',
             [fixTitle(title), content, category, status, id], (err) => {
-                if (err) res.status(500).json({ message: 'Gagal update' });
-                else {
-                    backupDatabase();
-                    res.json({ message: 'Berita diupdate!' });
-                }
+                res.json(err ? { message: 'Gagal update' } : { message: 'Berita diupdate!' });
             });
     }
 });
 
 app.delete('/api/news/:id', (req, res) => {
     db.run('DELETE FROM news WHERE id = ?', [req.params.id], function(err) {
-        if (err) res.status(500).json({ message: 'Gagal hapus' });
-        else {
-            backupDatabase();
-            res.json({ message: 'Berita dihapus!' });
-        }
+        res.json(err ? { message: 'Gagal hapus' } : { message: 'Berita dihapus!' });
     });
 });
 
 app.post('/api/fetch-news', async (req, res) => {
     await updateNews();
-    res.json({ message: 'Update berita sepakbola selesai!' });
+    res.json({ message: 'Update berita Piala Dunia selesai!' });
 });
 
 // ============ ROUTE UNTUK HALAMAN STATIS ============
+// Halaman utama
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Halaman login admin
 app.get('/login.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+// Halaman admin panel (dilindungi middleware)
 app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+// Fallback untuk file statis lainnya
 app.get('*.html', (req, res) => {
     const filePath = path.join(__dirname, req.path);
     if (fs.existsSync(filePath)) {
@@ -1002,33 +834,17 @@ app.get('*.html', (req, res) => {
 
 // ============ JALANKAN SERVER ============
 app.listen(PORT, async () => {
-    console.log(`\n⚽⚽⚽ ABAD4D SPORT - BOT BERITA SEPAKBOLA ⚽⚽⚽`);
+    console.log(`\n🏆🏆🏆 ABAD4D SPORT - BOT PIALA DUNIA 2026 🏆🏆🏆`);
     console.log(`📍 Server: http://localhost:${PORT}`);
-    console.log(`🔑 Admin: admin / admin123`);
+    console.log(`🔑 Admin: admin / admin123 (Ganti password segera!)`);
     console.log(`🔐 Secret Key: ${ADMIN_SECRET_KEY}`);
     console.log(`📡 SUMBER: Bola.net, Goal.com, Google News`);
-    console.log(`🏆 KATEGORI: 13 kategori sepakbola lengkap`);
-    console.log(`⏰ UPDATE: Setiap 14 menit (1 postingan)`);
-    console.log(`💾 BACKUP: Otomatis setiap post, data permanen!\n`);
-    
-    // Restore database
-    await restoreDatabase();
-    
-    const totalNews = await getTotalNews();
-    console.log(`📊 TOTAL BERITA DI DATABASE: ${totalNews}\n`);
+    console.log(`🎯 TARGET: 1-2 berita per jam (HANYA berita terbaru)`);
+    console.log(`⏰ UPDATE: Setiap 1 jam (24 jam penuh)\n`);
     
     console.log('📰 Memulai update pertama...\n');
-    
     await updateNews();
     
-    setInterval(async () => {
-        await updateNews();
-    }, 60 * 1000); // Cek setiap 1 menit
-    
-    // Backup setiap 1 jam
-    setInterval(() => {
-        backupDatabase();
-    }, 60 * 60 * 1000);
-    
-    console.log('⏰ Timer aktif: Pengecekan setiap 1 menit, posting setiap 14 menit\n');
+    setInterval(updateNews, 60 * 60 * 1000);
+    console.log('⏰ Timer aktif: Update setiap 1 jam\n');
 });
