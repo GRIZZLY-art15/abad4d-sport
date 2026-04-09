@@ -162,6 +162,57 @@ app.get('/api/admin/verify', (req, res) => {
     }
 });
 
+// ============ BACKUP & RESTORE DATABASE (AGAR DATA TIDAK HILANG) ============
+const BACKUP_FILE = 'backup-news.json';
+
+async function backupDatabase() {
+    try {
+        const news = await new Promise((resolve) => {
+            db.all('SELECT * FROM news ORDER BY id DESC', (err, rows) => {
+                resolve(rows || []);
+            });
+        });
+        
+        fs.writeFileSync(BACKUP_FILE, JSON.stringify(news, null, 2));
+        console.log(`💾 Backup database: ${news.length} berita tersimpan`);
+    } catch (error) {
+        console.log(`⚠️ Backup gagal: ${error.message}`);
+    }
+}
+
+async function restoreDatabase() {
+    try {
+        if (fs.existsSync(BACKUP_FILE)) {
+            const backup = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
+            
+            if (backup.length > 0) {
+                // Cek apakah database kosong
+                const count = await new Promise((resolve) => {
+                    db.get('SELECT COUNT(*) as count FROM news', (err, row) => {
+                        resolve(row ? row.count : 0);
+                    });
+                });
+                
+                if (count === 0) {
+                    for (const news of backup) {
+                        await new Promise((resolve) => {
+                            db.run(
+                                `INSERT OR IGNORE INTO news (id, title, content, image, category, status, published_at, views, created_at)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                [news.id, news.title, news.content, news.image, news.category, news.status, news.published_at, news.views || 0, news.created_at],
+                                (err) => resolve()
+                            );
+                        });
+                    }
+                    console.log(`🔄 Restore database: ${backup.length} berita dipulihkan`);
+                }
+            }
+        }
+    } catch (error) {
+        console.log(`⚠️ Restore gagal: ${error.message}`);
+    }
+}
+
 // ============ FILTER BERITA TERBARU (HANYA 7 HARI) ============
 function isRecentFootballNews(title, publishedAt) {
     const titleLower = title.toLowerCase();
@@ -608,7 +659,7 @@ function fixTitle(title) {
     return fixed.substring(0, 120) || 'Berita Sepakbola Terbaru';
 }
 
-// ============ BUAT DESKRIPSI (VERSI RINGKAS UNTUK 14 MENIT) ============
+// ============ BUAT DESKRIPSI ============
 function createDescription(title, originalContent, category) {
     const titleClean = title.replace(/[!?]+$/, '');
     
@@ -652,14 +703,16 @@ async function updateNews() {
     const now = getWIB();
     const nowMs = Date.now();
     
-    // Cek apakah sudah waktunya post (14 menit)
     if (nowMs - lastPostTime < POST_INTERVAL_MS && lastPostTime > 0) {
-        console.log(`\n⏳ ${now} WIB - Menunggu waktu post berikutnya... (${Math.round((POST_INTERVAL_MS - (nowMs - lastPostTime)) / 1000)} detik lagi)`);
+        const remaining = Math.round((POST_INTERVAL_MS - (nowMs - lastPostTime)) / 1000);
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        console.log(`\n⏳ ${now} WIB - Post berikutnya: ${minutes}m ${seconds}s lagi`);
         return;
     }
     
     if (isUpdating) {
-        console.log(`\n⏳ ${now} WIB - Update sedang berjalan, lewati...`);
+        console.log(`\n⏳ ${now} WIB - Update sedang berjalan...`);
         return;
     }
     
@@ -681,7 +734,6 @@ async function updateNews() {
     console.log(`  Google News: ${googleArticles.length} berita`);
     allArticles.push(...webArticles, ...googleArticles);
     
-    // Filter unik
     const unique = [];
     const seen = new Set();
     for (const article of allArticles) {
@@ -695,9 +747,7 @@ async function updateNews() {
     console.log(`\n📊 TOTAL BERITA UNIK: ${unique.length}`);
     unique.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
     
-    // Ambil 10 berita terbaru
     const latestNews = unique.slice(0, 10);
-    
     let posted = false;
     
     for (const article of latestNews) {
@@ -705,17 +755,12 @@ async function updateNews() {
         
         const category = detectCategory(article.title);
         
-        // Validasi berita
         if (!isRecentFootballNews(article.title, article.published_at)) {
             continue;
         }
         
-        // Cek duplikat 6 jam terakhir
         const isDuplicateNews = await isDuplicate(article.title, article.link);
-        
-        if (isDuplicateNews) {
-            continue;
-        }
+        if (isDuplicateNews) continue;
         
         console.log(`\n  📌 [${category}] ${article.title.substring(0, 55)}...`);
         
@@ -766,6 +811,8 @@ async function updateNews() {
                         lastPostTime = Date.now();
                         console.log(`      ✅ BERITA BERHASIL DIPOSTING!`);
                         console.log(`      📅 Next post: 14 menit lagi`);
+                        // Backup setelah post berhasil
+                        backupDatabase();
                     }
                     resolve();
                 }
@@ -777,15 +824,23 @@ async function updateNews() {
     
     if (!posted) {
         console.log(`\n⚠️ TIDAK ADA BERITA BARU YANG SIAP DIPOSTING`);
-        console.log(`   Mencoba lagi dalam 5 menit...`);
     }
     
     console.log('\n' + '='.repeat(60));
     console.log(`✅ UPDATE SELESAI!`);
     console.log(`   📰 Status: ${posted ? 'BERHASIL POSTING' : 'TIDAK ADA BERITA'}`);
+    console.log(`   💾 Total berita di database: ${await getTotalNews()}`);
     console.log('='.repeat(60) + '\n');
     
     isUpdating = false;
+}
+
+async function getTotalNews() {
+    return new Promise((resolve) => {
+        db.get('SELECT COUNT(*) as count FROM news', (err, row) => {
+            resolve(row ? row.count : 0);
+        });
+    });
 }
 
 function sleep(ms) {
@@ -839,6 +894,11 @@ bcrypt.hash('admin123', 10).then(hash => {
     console.log('✅ Admin: admin / admin123');
 });
 
+// Restore database setelah koneksi
+setTimeout(() => {
+    restoreDatabase();
+}, 1000);
+
 // ============ API ENDPOINTS ============
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
@@ -870,7 +930,12 @@ app.post('/api/news', upload.single('image'), (req, res) => {
     db.run('INSERT INTO news (title, content, image, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?)',
         [fixTitle(title), content, image, category || 'Berita Bola', status || 'published', new Date().toISOString()],
         function(err) {
-            res.json(err ? { message: 'Gagal menyimpan' } : { message: 'Berita ditambahkan!', id: this.lastID });
+            if (err) {
+                res.status(500).json({ message: 'Gagal menyimpan' });
+            } else {
+                backupDatabase();
+                res.json({ message: 'Berita ditambahkan!', id: this.lastID });
+            }
         });
 });
 
@@ -880,19 +945,31 @@ app.put('/api/news/:id', upload.single('image'), (req, res) => {
     if (req.file) {
         db.run('UPDATE news SET title = ?, content = ?, image = ?, category = ?, status = ? WHERE id = ?',
             [fixTitle(title), content, req.file.filename, category, status, id], (err) => {
-                res.json(err ? { message: 'Gagal update' } : { message: 'Berita diupdate!' });
+                if (err) res.status(500).json({ message: 'Gagal update' });
+                else {
+                    backupDatabase();
+                    res.json({ message: 'Berita diupdate!' });
+                }
             });
     } else {
         db.run('UPDATE news SET title = ?, content = ?, category = ?, status = ? WHERE id = ?',
             [fixTitle(title), content, category, status, id], (err) => {
-                res.json(err ? { message: 'Gagal update' } : { message: 'Berita diupdate!' });
+                if (err) res.status(500).json({ message: 'Gagal update' });
+                else {
+                    backupDatabase();
+                    res.json({ message: 'Berita diupdate!' });
+                }
             });
     }
 });
 
 app.delete('/api/news/:id', (req, res) => {
     db.run('DELETE FROM news WHERE id = ?', [req.params.id], function(err) {
-        res.json(err ? { message: 'Gagal hapus' } : { message: 'Berita dihapus!' });
+        if (err) res.status(500).json({ message: 'Gagal hapus' });
+        else {
+            backupDatabase();
+            res.json({ message: 'Berita dihapus!' });
+        }
     });
 });
 
@@ -930,20 +1007,28 @@ app.listen(PORT, async () => {
     console.log(`🔑 Admin: admin / admin123`);
     console.log(`🔐 Secret Key: ${ADMIN_SECRET_KEY}`);
     console.log(`📡 SUMBER: Bola.net, Goal.com, Google News`);
-    console.log(`🏆 KATEGORI: Piala Dunia 2026, Liga Champions, Liga Inggris, Liga Spanyol, Liga Italia, Bundesliga, Ligue 1, Liga Indonesia, Transfer, Hasil, Jadwal, Cedera, Berita Klub`);
-    console.log(`⏰ UPDATE: Setiap 14 menit (1 postingan per 14 menit)`);
-    console.log(`📅 TOTAL POST PER HARI: ~103 berita`);
-    console.log(`🎯 WEBSITE AKTIF 24 JAM NONSTOP!\n`);
+    console.log(`🏆 KATEGORI: 13 kategori sepakbola lengkap`);
+    console.log(`⏰ UPDATE: Setiap 14 menit (1 postingan)`);
+    console.log(`💾 BACKUP: Otomatis setiap post, data permanen!\n`);
+    
+    // Restore database
+    await restoreDatabase();
+    
+    const totalNews = await getTotalNews();
+    console.log(`📊 TOTAL BERITA DI DATABASE: ${totalNews}\n`);
     
     console.log('📰 Memulai update pertama...\n');
     
-    // Langsung jalankan update pertama
     await updateNews();
     
-    // Cek setiap 2 menit apakah sudah waktunya post
     setInterval(async () => {
         await updateNews();
-    }, 2 * 60 * 1000); // Cek setiap 2 menit
+    }, 60 * 1000); // Cek setiap 1 menit
     
-    console.log('⏰ Timer aktif: Pengecekan setiap 2 menit, posting setiap 14 menit\n');
+    // Backup setiap 1 jam
+    setInterval(() => {
+        backupDatabase();
+    }, 60 * 60 * 1000);
+    
+    console.log('⏰ Timer aktif: Pengecekan setiap 1 menit, posting setiap 14 menit\n');
 });
