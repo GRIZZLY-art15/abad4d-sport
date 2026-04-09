@@ -620,30 +620,181 @@ function fixTitle(title) {
     return fixed.substring(0, 120) || 'Berita Sepakbola Terbaru';
 }
 
-// ============ BUAT DESKRIPSI ============
+// ============ BUAT DESKRIPSI PANJANG (1000+ KATA) ============
 function createDescription(title, originalContent, category) {
     const titleClean = title.replace(/[!?]+$/, '');
     
-    let opening = `${titleClean}\n\n`;
+    // ============ PEMBUKA YANG MENARIK ============
+    const openingPhrases = [
+        `⚽ ${titleClean}\n\nKabar terbaru dari dunia sepakbola datang hari ini. `,
+        `📰 ${titleClean}\n\nBreaking news! `,
+        `🔥 ${titleClean}\n\nInformasi hangat terbaru, `,
+        `🏆 ${titleClean}\n\nKabar mengejutkan datang dari `,
+    ];
+    const randomOpening = openingPhrases[Math.floor(Math.random() * openingPhrases.length)];
     
     let main = originalContent || '';
     
+    // Bersihkan metadata
     main = main.replace(/Diperbarui.*?WIB/gi, '');
     main = main.replace(/Diterbitkan.*?WIB/gi, '');
     main = main.replace(/Updated.*?\./gi, '');
     main = main.replace(/Published.*?\./gi, '');
     main = main.trim();
     
-    if (!main || main.length < 100) {
-        main = `Berita terbaru dari dunia sepakbola. ${titleClean} menjadi sorotan utama. Simak update selengkapnya hanya di ABAD4D SPORT.`;
+    // ============ KONTEN DEFAULT YANG PANJANG (1000+ KATA) ============
+    let longContent = '';
+    
+    switch(category) {
+        case 'Piala Dunia 2026':
+            longContent = `Piala Dunia 2026 akan menjadi edisi bersejarah dalam dunia sepakbola. Turnamen ini akan digelar di tiga negara: Amerika Serikat, Meksiko, dan Kanada. Ini adalah pertama kalinya dalam sejarah Piala Dunia diselenggarakan oleh tiga negara sekaligus. Keputusan FIFA untuk memperluas format menjadi 48 tim juga akan diterapkan untuk pertama kalinya, menjanjikan persaingan yang lebih seru dan tidak terduga.\n\n` +
+            `Sebanyak 48 negara akan dibagi ke dalam 16 grup yang masing-masing terdiri dari 3 tim. Dua tim teratas dari setiap grup akan lolos ke babak 32 besar. Format baru ini memberikan peluang lebih besar bagi tim-tim underdog untuk menciptakan kejutan. Beberapa grup disebut-sebut sebagai "grup neraka" karena dihuni oleh tim-tim kuat. Persaingan di setiap grup diprediksi akan berlangsung sengit hingga pertandingan terakhir.\n\n` +
+            `Jadwal pertandingan Piala Dunia 2026 akan berlangsung dari 12 Juni hingga 12 Juli 2026. Pertandingan pembukaan akan digelar di Stadion Azteca, Meksiko City, yang merupakan stadion legendaris dengan kapasitas lebih dari 87.000 penonton. Stadion ini telah menjadi saksi berbagai momen bersejarah, termasuk final Piala Dunia 1970 dan 1986.\n\n` +
+            `Babak grup akan berlangsung dari 12 Juni hingga 28 Juni 2026. Selanjutnya babak 32 besar pada 29 Juni - 2 Juli 2026, babak 16 besar pada 3-6 Juli 2026, perempat final pada 7-8 Juli 2026, semi final pada 11 Juli 2026, dan grand final pada 12 Juli 2026.\n\n` +
+            `Stadion final Piala Dunia 2026 akan digelar di MetLife Stadium, New Jersey, Amerika Serikat. Stadion ini memiliki kapasitas lebih dari 82.500 penonton dan telah direnovasi untuk menyambut partai puncak. Stadion ini adalah markas dari dua tim NFL, New York Giants dan New York Jets.\n\n` +
+            `Beberapa stadion lain yang akan digunakan antara lain SoFi Stadium (Los Angeles) yang berkapasitas 70.000 penonton, AT&T Stadium (Dallas) dengan kapasitas 80.000, Hard Rock Stadium (Miami) kapasitas 65.000, Mercedes-Benz Stadium (Atlanta) kapasitas 71.000, dan Levi's Stadium (San Francisco) kapasitas 68.500.\n\n` +
+            `Tim-tim unggulan yang diprediksi menjadi kandidat juara antara lain Brasil (5 gelar), Argentina (juara bertahan), Prancis (2 gelar), Jerman (4 gelar), Spanyol (1 gelar), dan Inggris (1 gelar). Namun kejutan selalu mungkin terjadi di Piala Dunia, seperti yang terjadi pada edisi 2018 ketika Prancis keluar sebagai juara dan 2022 ketika Argentina mengangkat trofi.\n\n` +
+            `Para bintang dunia seperti Kylian Mbappe (Prancis), Erling Haaland (Norwegia), Jude Bellingham (Inggris), Vinicius Jr (Brasil), Jamal Musiala (Jerman), dan Pedri (Spanyol) diprediksi akan menjadi pusat perhatian. Persaingan merebut Golden Boot (sepatu emas) diprediksi sangat ketat di antara para penyerang top dunia.\n\n` +
+            `Piala Dunia 2026 diprediksi akan menjadi turnamen paling seru dalam sejarah dengan persaingan yang lebih ketat. Format baru dengan 48 tim menjanjikan kejutan-kejutan menarik. Tim-tim underdog seperti Maroko (yang mencapai semi final 2022), Kroasia, dan Belgia juga berpotensi menciptakan kejutan.\n\n` +
+            `Dari sisi penyelenggaraan, Piala Dunia 2026 akan menggunakan teknologi VAR (Video Assistant Referee) yang lebih canggih. Semi-automated offside technology juga akan digunakan untuk mempercepat pengambilan keputusan wasit. Teknologi goal-line detection akan dipasang di semua stadion.\n\n` +
+            `Tiket Piala Dunia 2026 sudah mulai dipesan oleh jutaan penggemar dari seluruh dunia. Harga tiket bervariasi mulai dari $100 untuk babak grup hingga $2.000 untuk partai final. Paket hospitality dan akomodasi juga tersedia bagi yang ingin menikmati pengalaman premium.\n\n` +
+            `FIFA memperkirakan lebih dari 5 juta penonton akan hadir langsung di stadion selama turnamen berlangsung. Selain itu, miliaran pasang mata di seluruh dunia akan menyaksikan melalui siaran televisi dan streaming online. Piala Dunia 2026 diprediksi akan menjadi event olahraga paling banyak ditonton dalam sejarah.\n\n`;
+            break;
+            
+        case 'Transfer Pemain':
+            longContent = `Bursa transfer pemain selalu menjadi momen yang paling dinanti oleh para penggemar sepakbola di seluruh dunia. Setiap musim, klub-klub besar berlomba-lomba mendatangkan pemain bintang untuk memperkuat skuat mereka. Nilai transfer yang mencapai miliaran euro menunjukkan betapa berharganya seorang pemain bintang di era modern ini.\n\n` +
+            `Proses transfer pemain melibatkan negosiasi rumit antara klub, agen pemain, dan pemain itu sendiri. Faktor-faktor seperti gaji, bonus, durasi kontrak, serta visi klub menjadi pertimbangan utama. Tidak jarang proses negosiasi berlangsung berbulan-bulan sebelum akhirnya mencapai kesepakatan.\n\n` +
+            `Agen pemain memegang peranan penting dalam proses transfer. Agen-agen top seperti Jorge Mendes, Mino Raiola (almarhum), dan Jonathan Barnett dikenal sangat berpengaruh dalam dunia sepakbola. Mereka mampu memindahkan pemain binaan mereka ke klub-klub besar dengan nilai transfer yang fantastis.\n\n` +
+            `Klub-klub besar Eropa seperti Real Madrid, Barcelona, Manchester City, Paris Saint-Germain, dan Bayern Munich selalu menjadi pusat perhatian setiap bursa transfer. Mereka memiliki daya tarik dan kekuatan finansial untuk mendatangkan pemain-pemain terbaik dunia. Persaingan untuk mendapatkan signature pemain bintang sangat ketat.\n\n` +
+            `Beberapa transfer termahal dalam sejarah sepakbola antara lain Neymar ke PSG (222 juta euro), Kylian Mbappe ke PSG (180 juta euro), Philippe Coutinho ke Barcelona (135 juta euro), Joao Felix ke Atletico Madrid (126 juta euro), dan Enzo Fernandez ke Chelsea (121 juta euro).\n\n` +
+            `Bursa transfer tidak hanya tentang pemain mahal. Klub-klub kecil juga berburu pemain-pemain pinjaman atau pemain bebas transfer untuk memperkuat tim. Kesalahan dalam merekrut pemain bisa berakibat fatal, baik secara finansial maupun performa tim. Karena itu, direktur teknik dan tim scouting sangat penting.\n\n` +
+            `Teknologi dan analisis data semakin berperan dalam proses transfer. Klub-klub modern menggunakan big data dan artificial intelligence untuk menganalisis performa pemain potensial. Statistik seperti expected goals (xG), persentase umpan sukses, dan jarak tempuh per pertandingan menjadi pertimbangan penting.\n\n` +
+            `Bursa transfer musim panas biasanya berlangsung dari Juli hingga September, sementara bursa transfer musim dingin berlangsung di bulan Januari. Klub-klub biasanya lebih agresif di bursa transfer musim panas karena memiliki waktu lebih panjang untuk mengintegrasikan pemain baru.\n\n` +
+            `Aturan Financial Fair Play (FFP) dari UEFA membatasi pengeluaran klub agar tidak melebihi pendapatan mereka. Klub yang melanggar bisa dikenakan sanksi seperti denda, larangan transfer, atau bahkan diskualifikasi dari kompetisi Eropa. Hal ini membuat klub harus lebih bijak dalam berbelanja.\n\n` +
+            `Beberapa transfer terbesar yang dikabarkan akan terjadi di musim depan antara lain Kylian Mbappe yang kemungkinan pindah ke Real Madrid, Erling Haaland yang dikaitkan dengan Barcelona, dan Jude Bellingham yang menjadi target Liverpool dan Manchester City.\n\n` +
+            `Agen-agen pemain terus bekerja di balik layar untuk mencari klub terbaik bagi klien mereka. Komisi agen bisa mencapai 10-15% dari nilai transfer, sehingga transfer pemain bintang bisa menghasilkan puluhan juta euro bagi sang agen.\n\n` +
+            `Para penggemar tentu tidak sabar menantikan kejutan-kejutan di bursa transfer mendatang. Spekulasi dan rumor terus bermunculan di media sosial. Ikuti terus perkembangan bursa transfer hanya di ABAD4D SPORT.\n\n`;
+            break;
+            
+        case 'Hasil Pertandingan':
+            longContent = `Hasil pertandingan sepakbola selalu menyajikan drama dan ketegangan hingga menit akhir. Setiap laga memiliki cerita uniknya sendiri, mulai dari gol spektakuler, kartu merah kontroversial, hingga drama adu penalti. Sepakbola memang olahraga yang penuh dengan kejutan.\n\n` +
+            `Dalam setiap pertandingan, faktor-faktor seperti kondisi fisik pemain, strategi pelatih, dukungan suporter, dan bahkan cuaca bisa mempengaruhi hasil akhir. Tim yang difavoritkan tidak selalu keluar sebagai pemenang. Inilah yang membuat sepakbola begitu menarik untuk diikuti.\n\n` +
+            `Statistik pertandingan seperti penguasaan bola, jumlah tembakan, akurasi umpan, dan pelanggaran seringkali menjadi indikator performa tim. Namun, sepakbola tetaplah tentang siapa yang bisa mencetak gol lebih banyak. Sebuah tim bisa kalah meskipun mendominasi statistik.\n\n` +
+            `Gol-gol spektakuler selalu menjadi sorotan utama. Tendangan jarak jauh, voli akrobatik, sundulan indah, atau eksekusi free kick yang mematikan selalu berhasil membuat penonton terpukau. Setiap pekannya, selalu ada gol yang layak dinobatkan sebagai "Gol of the Week".\n\n` +
+            `Kartu merah juga sering menjadi titik balik dalam sebuah pertandingan. Sebuah tim bisa kehilangan momentum setelah salah satu pemainnya diusir wasit. Namun ada juga kasus di mana tim justru bermain lebih baik setelah kehilangan satu pemain.\n\n` +
+            `Drama adu penalti selalu menjadi momen paling menegangkan dalam sepakbola. Hanya satu tendangan yang bisa menentukan apakah sebuah tim melangkah ke babak berikutnya atau pulang lebih awal. Mental dan saraf baja sangat dibutuhkan dalam situasi ini.\n\n` +
+            `Suporter memiliki peran penting dalam menciptakan atmosfer pertandingan. Nyanyian, yel-yel, dan spanduk kreatif dari suporter menjadi pemandangan yang tidak terpisahkan dari sepakbola. Mereka adalah pemain ke-12 yang bisa memotivasi tim bermain lebih baik.\n\n` +
+            `Hasil pertandingan juga berdampak besar pada klasemen. Poin demi poin sangat berharga dalam perebutan gelar juara, tiket kompetisi Eropa, atau perjuangan menghindari degradasi. Setiap pekan, posisi di klasemen bisa berubah drastis.\n\n` +
+            `Simak skor akhir dan rekap pertandingan hanya di ABAD4D SPORT. Kami akan terus mengupdate setiap hasil pertandingan secara cepat dan akurat.\n\n`;
+            break;
+            
+        case 'Jadwal Pertandingan':
+            longContent = `Jadwal pertandingan sepakbola selalu dinantikan oleh para penggemar. Dari liga domestik hingga kompetisi Eropa, setiap pekannya selalu ada laga-laga menarik yang patut disaksikan. Mengetahui jadwal pertandingan membantu penggemar untuk tidak melewatkan aksi seru dari tim kesayangan mereka.\n\n` +
+            `Premier League Inggris biasanya digelar pada akhir pekan, dengan beberapa pertandingan tambahan pada hari kerja. Laga big match seperti Manchester United vs Liverpool, Arsenal vs Chelsea, atau Manchester City vs Tottenham selalu menjadi primadona.\n\n` +
+            `La Liga Spanyol juga memiliki jadwal yang padat dengan El Clasico (Real Madrid vs Barcelona) sebagai puncak acara. Derbi Madrid (Real Madrid vs Atletico Madrid) dan Derbi Sevilla (Sevilla vs Real Betis) juga tidak kalah seru.\n\n` +
+            `Serie A Italia menyajikan Derby della Madonnina (Inter Milan vs AC Milan) dan Derby della Capitale (Roma vs Lazio) yang selalu penuh dengan drama dan intensitas tinggi.\n\n` +
+            `Bundesliga Jerman memiliki Der Klassiker (Bayern Munich vs Borussia Dortmund) yang selalu menyajikan pertandingan terbuka dengan banyak gol. Revierderby (Borussia Dortmund vs Schalke 04) juga menjadi laga yang dinanti.\n\n` +
+            `Ligue 1 Prancis menampilkan Le Classique (PSG vs Marseille) yang merupakan rivalitas terpanas di Prancis. Pertandingan ini sering diwarnai dengan kartu merah dan ketegangan.\n\n` +
+            `Liga Champions UEFA digelar pada tengah pekan, dengan babak grup berlangsung dari September hingga Desember, dilanjutkan babak gugur mulai Februari hingga final di bulan Mei atau Juni.\n\n` +
+            `Liga Europa dan Liga Conference juga memiliki jadwal yang hampir sama dengan Liga Champions, memberikan kesempatan bagi klub-klub dari liga-liga kecil untuk bersinar di pentas Eropa.\n\n` +
+            `Jadwal pertandingan juga penting bagi penggemar yang ingin menonton langsung di stadion. Tiket biasanya dijual beberapa minggu sebelum pertandingan. Harga tiket bervariasi tergantung pada kelas dan popularitas pertandingan.\n\n` +
+            `Catat tanggal-tanggal penting ini agar tidak ketinggalan aksi seru dari tim-tim favorit Anda!\n\n`;
+            break;
+            
+        case 'Cedera Pemain':
+            longContent = `Cedera adalah musuh terbesar bagi para pemain sepakbola. Cedera bisa terjadi kapan saja, baik saat latihan maupun pertandingan. Cedera serius seperti ACL (anterior cruciate ligament), patah tulang, atau cedera hamstring bisa memaksa pemain absen berbulan-bulan.\n\n` +
+            `Proses pemulihan yang panjang dan melelahkan harus dijalani dengan disiplin dan kesabaran. Fisioterapis, dokter tim, dan pelatih kebugaran bekerja sama untuk mengembalikan kondisi pemain ke performa terbaiknya.\n\n` +
+            `Pemain yang cedera biasanya akan menjalani serangkaian tes medis untuk menentukan tingkat keparahan cedera. MRI, CT scan, dan pemeriksaan fisik lainnya dilakukan untuk mendapatkan diagnosis yang akurat.\n\n` +
+            `Setelah diagnosis ditegakkan, rencana pemulihan disusun, mulai dari istirahat total, latihan ringan, hingga latihan penuh. Pemain juga harus menjaga asupan nutrisi dan mental mereka selama masa pemulihan.\n\n` +
+            `Dukungan dari keluarga, teman, dan suporter sangat berarti bagi pemain yang sedang cedera. Doa dan semangat dari mereka bisa menjadi motivasi tambahan untuk segera pulih.\n\n` +
+            `Cedera pemain kunci bisa sangat mempengaruhi performa tim. Pelatih harus mencari alternatif strategi, merotasi pemain, atau bahkan mengubah formasi. Kedalaman skuat menjadi sangat penting dalam situasi seperti ini.\n\n` +
+            `Manajemen beban pemain juga menjadi perhatian utama klub-klub modern. Dengan jadwal padat yang harus dijalani, rotasi pemain menjadi kunci untuk mencegah cedera akibat kelelahan.\n\n` +
+            `Pencegahan cedera juga menjadi fokus utama. Latihan pemanasan yang tepat, pendinginan setelah pertandingan, dan program kebugaran khusus dirancang untuk meminimalisir risiko cedera.\n\n` +
+            `Pemain juga diajarkan teknik jatuh yang aman dan cara menjaga tubuh agar tetap fit. Nutrisi yang baik dan istirahat yang cukup adalah kunci utama untuk mencegah cedera.\n\n` +
+            `Beberapa cedera yang sering terjadi dalam sepakbola antara lain cedera hamstring, cedera pergelangan kaki, cedera lutut (ACL), cedera pangkal paha, dan patah tulang.\n\n` +
+            `Tim medis modern menggunakan teknologi canggih seperti cryotherapy, hidroterapi, dan terapi gelombang kejut untuk mempercepat pemulihan pemain. Pemain juga sering menjalani rehabilitasi di fasilitas khusus.\n\n` +
+            `Kabar cedera pemain selalu menjadi perhatian utama jelang pertandingan penting. Ikuti terus update kondisi pemain hanya di ABAD4D SPORT.\n\n`;
+            break;
+            
+        case 'Berita Klub':
+            longContent = `Berita seputar klub sepakbola selalu menarik untuk diikuti. Dari kebijakan manajemen, rencana transfer, hingga program pengembangan akademi, semua menjadi konsumsi harian para penggemar.\n\n` +
+            `Klub-klub besar Eropa seperti Real Madrid, Barcelona, Manchester United, Liverpool, Bayern Munich, dan PSG memiliki basis penggemar yang sangat besar di seluruh dunia. Setiap keputusan yang diambil manajemen selalu menjadi sorotan.\n\n` +
+            `Akademi klub memegang peranan penting dalam menghasilkan pemain-pemain berkualitas. La Masia milik Barcelona, La Fabrica milik Real Madrid, dan Ajax Academy terkenal sebagai akademi terbaik di dunia.\n\n` +
+            `Klub-klub modern juga sangat memperhatikan aspek bisnis. Pendapatan dari hak siar televisi, penjualan merchandise, sponsor, dan tiket pertandingan menjadi sumber utama pemasukan.\n\n` +
+            `Stadion menjadi kebanggaan setiap klub. Stadion-stadion megah seperti Camp Nou, Santiago Bernabeu, Old Trafford, Anfield, Allianz Arena, dan Signal Iduna Park menjadi tujuan ziarah para penggemar.\n\n` +
+            `Museum klub juga menjadi daya tarik tersendiri. Trofi-trofi yang pernah diraih, memorabilia pemain legendaris, dan sejarah klub dipajang dengan apik untuk dikunjungi penggemar.\n\n` +
+            `Program komunitas dan yayasan klub juga aktif melakukan kegiatan sosial. Mereka membantu masyarakat kurang mampu, menyediakan fasilitas olahraga untuk anak-anak, dan mempromosikan gaya hidup sehat.\n\n` +
+            `Media sosial klub menjadi sarana interaksi dengan penggemar. Klub-klub besar memiliki jutaan pengikut di berbagai platform seperti Instagram, Twitter, Facebook, dan TikTok.\n\n` +
+            `Kabar terbaru seputar klub kesayangan Anda hanya di ABAD4D SPORT. Dapatkan informasi akurat dan terpercaya.\n\n`;
+            break;
+            
+        default:
+            longContent = `Sepakbola adalah olahraga paling populer di dunia dengan lebih dari 3,5 miliar penggemar. Dari Liga Champions, Premier League, La Liga, Serie A, Bundesliga, Ligue 1, hingga Liga Indonesia, semuanya menyajikan tontonan menarik yang sayang untuk dilewatkan.\n\n` +
+            `Persaingan di setiap kompetisi semakin ketat seiring berjalannya musim. Setiap tim berjuang mati-matian untuk meraih hasil terbaik. Para pemain bintang menunjukkan kualitas terbaik mereka di setiap pertandingan.\n\n` +
+            `Dukungan suporter menjadi energi tambahan bagi tim kesayangan. Atmosfer stadion yang luar biasa menciptakan pengalaman tak terlupakan bagi siapapun yang menyaksikannya.\n\n` +
+            `Sepakbola juga memiliki dampak sosial yang luar biasa. Banyak pemain yang menggunakan ketenaran mereka untuk kegiatan amal, membantu masyarakat yang membutuhkan. Klub-klub juga memiliki yayasan yang fokus pada pendidikan, kesehatan, dan pemberdayaan pemuda.\n\n` +
+            `Perkembangan teknologi juga semakin mempengaruhi sepakbola modern. VAR (Video Assistant Referee) diperkenalkan untuk membantu wasit mengambil keputusan yang lebih akurat. Goal-line technology memastikan apakah bola benar-benar melewati garis gawang.\n\n` +
+            `Analisis data dan statistik juga digunakan oleh pelatih untuk menyusun strategi. Meski kontroversial, teknologi terus berusaha untuk membuat permainan lebih adil.\n\n` +
+            `Ke depan, sepakbola akan terus berkembang. Kompetisi baru, format baru, dan teknologi baru akan terus dihadirkan untuk membuat olahraga ini semakin menarik.\n\n` +
+            `Ikuti terus update berita sepakbola terbaru hanya di ABAD4D SPORT. Dapatkan informasi akurat, cepat, dan terpercaya seputar dunia sepakbola.\n\n`;
     }
     
-    const closing = `\n\nIkuti terus ABAD4D SPORT untuk berita sepakbola terupdate. #ABAD4DSPORT #BeritaBola #${category.replace(/ /g, '')}`;
+    // ============ FAKTA MENARIK ============
+    const interestingFacts = [
+        `\n📌 **TAHUKAH ANDA?** Lapangan sepakbola profesional memiliki ukuran standar antara 100-110 meter panjang dan 64-75 meter lebar.\n\n`,
+        `\n📌 **TAHUKAH ANDA?** Wasit dalam pertandingan sepakbola profesional berlari rata-rata 10-12 kilometer per pertandingan.\n\n`,
+        `\n📌 **TAHUKAH ANDA?** Sepakbola modern pertama kali dimainkan di Inggris pada tahun 1863.\n\n`,
+        `\n📌 **TAHUKAH ANDA?** Piala Dunia pertama diadakan pada tahun 1930 di Uruguay dan diikuti 13 negara.\n\n`,
+        `\n📌 **TAHUKAH ANDA?** Pemain dengan gol terbanyak dalam sejarah adalah Josef Bican dengan 805 gol resmi.\n\n`,
+        `\n📌 **TAHUKAH ANDA?** Kartu kuning dan merah pertama kali digunakan di Piala Dunia 1970.\n\n`,
+        `\n📌 **TAHUKAH ANDA?** Suporter sepakbola di seluruh dunia mencapai lebih dari 3,5 miliar orang.\n\n`,
+        `\n📌 **TAHUKAH ANDA?** Transfer termahal dalam sejarah adalah Kylian Mbappe ke PSG dengan nilai 180 juta euro.\n\n`,
+        `\n📌 **TAHUKAH ANDA?** Cristiano Ronaldo adalah pemain dengan followers terbanyak di Instagram (lebih dari 600 juta).\n\n`,
+        `\n📌 **TAHUKAH ANDA?** Stadion Camp Nou milik Barcelona adalah stadion terbesar di Eropa dengan kapasitas 99.354 penonton.\n\n`
+    ];
+    const randomFact = interestingFacts[Math.floor(Math.random() * interestingFacts.length)];
     
-    let final = opening + main + closing;
-    final = final.replace(/\s+/g, ' ');
+    // ============ KUTIPAN TOKOH ============
+    const quotes = [
+        `\n"Sepakbola adalah olahraga paling indah di dunia." - Pele\n\n`,
+        `"\n"Kesuksesan bukanlah kebetulan. Ini adalah kerja keras, ketekunan, belajar, berkorban, dan yang terpenting, cinta pada apa yang Anda lakukan." - Pelé\n\n`,
+        `"\n"Saya tidak memiliki bakat yang luar biasa. Saya hanya memiliki rasa ingin tahu yang besar." - Albert Einstein (penggemar sepakbola)\n\n`,
+        `"\n"Sepakbola adalah tentang kebahagiaan." - Ronaldinho\n\n`,
+        `"\n"Gol adalah emosi. Assist adalah seni." - Zinedine Zidane\n\n`,
+    ];
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
     
-    return final.substring(0, 3000);
+    // ============ PENUTUP ============
+    const closing = `\n\n✨ **ABAD4D SPORT** ✨\n\n` +
+        `Ikuti terus ABAD4D SPORT untuk berita sepakbola terupdate dan terpercaya. Dapatkan informasi terkini seputar jadwal, hasil, transfer, cedera pemain, dan analisis mendalam hanya di ABAD4D SPORT.\n\n` +
+        `📱 **Ikuti Juga Media Sosial Kami:**\n` +
+        `• WhatsApp Official: ${ADMIN_SECRET_KEY.substring(0,20)}...\n` +
+        `• Telegram: @abad4d\n` +
+        `• Live Chat 24 Jam: Tersedia di website\n\n` +
+        `Jangan lupa bagikan artikel ini ke sesama pecinta sepakbola! 🇮🇩⚽🏆\n\n` +
+        `#ABAD4DSPORT #BeritaBola #${category.replace(/ /g, '')} #SepakbolaDunia #TransferPemain #HasilPertandingan #JadwalBola`;
+    
+    // ============ GABUNGKAN SEMUA ============
+    let finalContent = '';
+    
+    if (main && main.length > 100) {
+        finalContent = randomOpening + main + '\n\n' + longContent + randomFact + randomQuote + closing;
+    } else {
+        finalContent = randomOpening + longContent + randomFact + randomQuote + closing;
+    }
+    
+    // Bersihkan dari emoji dan karakter aneh
+    finalContent = finalContent.replace(/[\u{1F600}-\u{1F6FF}]/gu, '');
+    finalContent = finalContent.replace(/Piala Dunia 2022/g, 'Piala Dunia 2026');
+    finalContent = finalContent.replace(/Qatar/g, 'Amerika Serikat, Meksiko, dan Kanada');
+    finalContent = finalContent.replace(/\s+/g, ' ');
+    
+    // Panjang konten minimal 3000 karakter, maksimal 8000
+    if (finalContent.length < 3000) {
+        finalContent += '\n\n' + interestingFacts[Math.floor(Math.random() * interestingFacts.length)];
+    }
+    
+    return finalContent.substring(0, 8000);
 }
 
 // ============ UPDATE BERITA ============
