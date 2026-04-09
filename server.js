@@ -10,7 +10,7 @@ const cheerio = require('cheerio');
 const cookieParser = require('cookie-parser');
 
 const app = express();
-const PORT = process.env.PORT || 3005;
+const PORT = 3005;
 
 // ============ SET TIMEZONE WIB (UTC+7) ============
 process.env.TZ = 'Asia/Jakarta';
@@ -69,7 +69,7 @@ app.use('/admin.html', (req, res, next) => {
     const token = req.cookies?.adminToken || req.headers.authorization?.replace('Bearer ', '');
     
     if (!token) {
-        return res.redirect('/login.html');
+        return res.redirect('/admin-login.html');
     }
     
     try {
@@ -85,9 +85,9 @@ app.use('/admin.html', (req, res, next) => {
             }
         }
         
-        res.redirect('/login.html');
+        res.redirect('/admin-login.html');
     } catch (error) {
-        res.redirect('/login.html');
+        res.redirect('/admin-login.html');
     }
 });
 
@@ -804,32 +804,6 @@ app.delete('/api/news/:id', (req, res) => {
 app.post('/api/fetch-news', async (req, res) => {
     await updateNews();
     res.json({ message: 'Update berita Piala Dunia selesai!' });
-});
-
-// ============ ROUTE UNTUK HALAMAN STATIS ============
-// Halaman utama
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Halaman login admin
-app.get('/login.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-// Halaman admin panel (dilindungi middleware)
-app.get('/admin.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-// Fallback untuk file statis lainnya
-app.get('*.html', (req, res) => {
-    const filePath = path.join(__dirname, req.path);
-    if (fs.existsSync(filePath)) {
-        res.sendFile(filePath);
-    } else {
-        res.status(404).send('File not found');
-    }
 });
 
 // ============ JALANKAN SERVER ============
