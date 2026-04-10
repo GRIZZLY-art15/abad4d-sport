@@ -86,37 +86,25 @@ const FORBIDDEN_KEYWORDS = [
 
 // ============ SINONIM UNTUK AI REWRITE ============
 const SYNONYMS = {
-    // Kata kerja
     'mengatakan': ['menyebutkan', 'mengungkapkan', 'menyatakan', 'mengumumkan'],
     'menang': ['meraih kemenangan', 'mengalahkan', 'unggul', 'berhasil'],
     'kalah': ['takluk', 'kekalahan', 'jatuh', 'tersingkir'],
     'transfer': ['pindah klub', 'bergabung', 'rekrutmen', 'perekrutan'],
     'resmi': ['diumumkan', 'dikonfirmasi', 'sah', 'official'],
-    
-    // Kata benda
     'pemain': ['bintang', 'atlet', 'pesepakbola', 'pemain bola'],
     'pelatih': ['manajer', 'taktisi', 'juru taktik', 'coach'],
     'klub': ['tim', 'kesebelasan', 'squad', 'skuat'],
     'pertandingan': ['laga', 'duel', 'partai', 'tandingan'],
     'gol': ['tendangan', 'lesakan', 'sundulan', 'tembakan'],
-    
-    // Kata sifat
     'hebat': ['luar biasa', 'fantastis', 'spektakuler', 'gemilang'],
     'penting': ['krusial', 'vital', 'signifikan', 'menentukan'],
     'terbaru': ['terkini', 'update', 'mutakhir', 'hangat'],
-    
-    // Kata keterangan
-    'segera': ['cepat', 'lekas', 'dalam waktu dekat', 'tak lama lagi'],
-    'resmi': ['sah', 'dikonfirmasi', 'diumumkan', 'terkonfirmasi']
+    'segera': ['cepat', 'lekas', 'dalam waktu dekat', 'tak lama lagi']
 };
 
-// ============ FUNGSI AI REWRITE (NATURAL, SEPERTI MANUSIA) ============
 function aiRewrite(text, category) {
     if (!text || text.length < 50) return text;
-    
     let rewritten = text;
-    
-    // 1. Ganti sinonim secara acak
     for (const [word, synonyms] of Object.entries(SYNONYMS)) {
         const regex = new RegExp(`\\b${word}\\b`, 'gi');
         if (regex.test(rewritten) && Math.random() > 0.6) {
@@ -124,18 +112,13 @@ function aiRewrite(text, category) {
             rewritten = rewritten.replace(regex, randomSynonym);
         }
     }
-    
-    // 2. Restrukturisasi kalimat (ubah urutan)
     const sentences = rewritten.split(/(?<=[.!?])\s+/);
     if (sentences.length > 2 && Math.random() > 0.7) {
-        // Pindahkan kalimat kedua ke depan untuk variasi
         const temp = sentences[0];
         sentences[0] = sentences[1];
         sentences[1] = temp;
         rewritten = sentences.join(' ');
     }
-    
-    // 3. Tambahkan kata sambung yang natural
     const connectors = ['Selain itu,', 'Sementara itu,', 'Di sisi lain,', 'Tak hanya itu,'];
     if (rewritten.length > 100 && Math.random() > 0.8) {
         const randomConnector = connectors[Math.floor(Math.random() * connectors.length)];
@@ -144,28 +127,17 @@ function aiRewrite(text, category) {
             rewritten = rewritten.slice(0, insertPoint) + ' ' + randomConnector + ' ' + rewritten.slice(insertPoint);
         }
     }
-    
-    // 4. Tambahkan kalimat pembuka yang natural (untuk berita panjang)
     if (rewritten.length > 300 && !rewritten.includes('Kabar')) {
-        const openers = [
-            `Kabar terbaru datang dari dunia sepakbola, `,
-            `Breaking news! `,
-            `Informasi hangat terbaru, `
-        ];
+        const openers = [`Kabar terbaru datang dari dunia sepakbola, `, `Breaking news! `, `Informasi hangat terbaru, `];
         if (Math.random() > 0.5) {
             rewritten = openers[Math.floor(Math.random() * openers.length)] + rewritten.charAt(0).toLowerCase() + rewritten.slice(1);
         }
     }
-    
-    // 5. Bersihkan dari duplikasi spasi
     rewritten = rewritten.replace(/\s+/g, ' ');
-    
     return rewritten;
 }
 
-// ============ FUNGSI INTERNAL LINKING (OTOMATIS) ============
 function addInternalLinks(content, currentId, category) {
-    // Daftar link internal yang akan disisipkan
     const internalLinks = [
         { text: 'berita Piala Dunia 2026 lainnya', url: '/?cat=Piala Dunia 2026' },
         { text: 'jadwal pertandingan selengkapnya', url: '/?cat=Jadwal Pertandingan' },
@@ -173,8 +145,6 @@ function addInternalLinks(content, currentId, category) {
         { text: 'hasil pertandingan terkini', url: '/?cat=Hasil Pertandingan' },
         { text: 'berita sepakbola terupdate', url: '/' }
     ];
-    
-    // Pilih 1-2 link internal secara acak
     const numLinks = Math.floor(Math.random() * 2) + 1;
     const selectedLinks = [];
     const shuffled = [...internalLinks];
@@ -182,23 +152,17 @@ function addInternalLinks(content, currentId, category) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    
     for (let i = 0; i < numLinks && i < shuffled.length; i++) {
         selectedLinks.push(shuffled[i]);
     }
-    
-    // Sisipkan link ke konten
     let linkedContent = content;
     for (const link of selectedLinks) {
         const linkHtml = `\n\nBaca juga ${link.text} di sini: ${SITE_URL}${link.url}\n\n`;
-        // Sisipkan di akhir konten
         linkedContent += linkHtml;
     }
-    
     return linkedContent;
 }
 
-// ============ GENERATE SITEMAP XML ============
 async function generateSitemap() {
     try {
         const news = await new Promise((resolve) => {
@@ -206,41 +170,17 @@ async function generateSitemap() {
                 resolve(rows || []);
             });
         });
-        
         let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
         sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-        
-        // Homepage
-        sitemap += `  <url>\n`;
-        sitemap += `    <loc>${SITE_URL}/</loc>\n`;
-        sitemap += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
-        sitemap += `    <changefreq>daily</changefreq>\n`;
-        sitemap += `    <priority>1.0</priority>\n`;
-        sitemap += `  </url>\n`;
-        
-        // Halaman kategori
+        sitemap += `  <url>\n    <loc>${SITE_URL}/</loc>\n    <lastmod>${new Date().toISOString()}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
         for (const [category, config] of Object.entries(FOOTBALL_CATEGORIES)) {
-            sitemap += `  <url>\n`;
-            sitemap += `    <loc>${SITE_URL}/?cat=${encodeURIComponent(category)}</loc>\n`;
-            sitemap += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
-            sitemap += `    <changefreq>daily</changefreq>\n`;
-            sitemap += `    <priority>0.8</priority>\n`;
-            sitemap += `  </url>\n`;
+            sitemap += `  <url>\n    <loc>${SITE_URL}/?cat=${encodeURIComponent(category)}</loc>\n    <lastmod>${new Date().toISOString()}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
         }
-        
-        // Halaman berita individual
         for (const item of news) {
             const slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 50);
-            sitemap += `  <url>\n`;
-            sitemap += `    <loc>${SITE_URL}/news/${item.id}/${slug}</loc>\n`;
-            sitemap += `    <lastmod>${new Date(item.published_at).toISOString()}</lastmod>\n`;
-            sitemap += `    <changefreq>weekly</changefreq>\n`;
-            sitemap += `    <priority>0.6</priority>\n`;
-            sitemap += `  </url>\n`;
+            sitemap += `  <url>\n    <loc>${SITE_URL}/news/${item.id}/${slug}</loc>\n    <lastmod>${new Date(item.published_at).toISOString()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
         }
-        
         sitemap += '</urlset>';
-        
         fs.writeFileSync(path.join(__dirname, 'sitemap.xml'), sitemap);
         console.log(`📊 Sitemap generated: ${news.length + 1 + Object.keys(FOOTBALL_CATEGORIES).length} URLs`);
         return true;
@@ -250,19 +190,14 @@ async function generateSitemap() {
     }
 }
 
-// ============ SUBMIT KE GOOGLE (Ping) ============
 async function submitToGoogle() {
     try {
-        // Ping Google Search Console
         const pingUrl = `https://www.google.com/ping?sitemap=${encodeURIComponent(`${SITE_URL}/sitemap.xml`)}`;
         await axios.get(pingUrl, { timeout: 5000 });
         console.log(`📡 Submitted sitemap to Google`);
-        
-        // Ping Bing
         const bingUrl = `https://www.bing.com/ping?sitemap=${encodeURIComponent(`${SITE_URL}/sitemap.xml`)}`;
         await axios.get(bingUrl, { timeout: 5000 });
         console.log(`📡 Submitted sitemap to Bing`);
-        
         return true;
     } catch (error) {
         console.log(`⚠️ Failed to submit to search engines: ${error.message}`);
@@ -270,14 +205,12 @@ async function submitToGoogle() {
     }
 }
 
-// ============ MIDDLEWARE ============
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 app.use(express.static(__dirname));
 
-// ============ SITEMAP ENDPOINT ============
 app.get('/sitemap.xml', (req, res) => {
     const sitemapPath = path.join(__dirname, 'sitemap.xml');
     if (fs.existsSync(sitemapPath)) {
@@ -288,7 +221,6 @@ app.get('/sitemap.xml', (req, res) => {
     }
 });
 
-// ============ ROBOTS.TXT ============
 app.get('/robots.txt', (req, res) => {
     const robots = `User-agent: *
 Allow: /
@@ -300,46 +232,28 @@ Disallow: /login.html`;
     res.send(robots);
 });
 
-// ============ PROTECT ADMIN PAGE ============
 app.use('/admin.html', (req, res, next) => {
     const token = req.cookies?.adminToken || req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-        return res.redirect('/login.html');
-    }
-    
+    if (!token) return res.redirect('/login.html');
     try {
         const decoded = Buffer.from(token, 'base64').toString();
         const [username, timestamp, secretKey] = decoded.split(':');
-        
         if (username === ADMIN_USERNAME && secretKey === ADMIN_SECRET_KEY) {
             const loginTime = parseInt(timestamp);
             const hoursSinceLogin = (Date.now() - loginTime) / (1000 * 60 * 60);
-            
-            if (hoursSinceLogin < 24) {
-                return next();
-            }
+            if (hoursSinceLogin < 24) return next();
         }
-        
         res.redirect('/login.html');
     } catch (error) {
         res.redirect('/login.html');
     }
 });
 
-// ============ API ADMIN LOGIN ============
 app.post('/api/admin/login', async (req, res) => {
     const { username, password, secretKey } = req.body;
-    
-    if (secretKey !== ADMIN_SECRET_KEY) {
-        return res.status(401).json({ success: false, message: 'Secret Key salah!' });
-    }
-    
+    if (secretKey !== ADMIN_SECRET_KEY) return res.status(401).json({ success: false, message: 'Secret Key salah!' });
     db.get('SELECT * FROM admin WHERE username = ?', [username], async (err, user) => {
-        if (err || !user) {
-            return res.json({ success: false, message: 'Username atau password salah!' });
-        }
-        
+        if (err || !user) return res.json({ success: false, message: 'Username atau password salah!' });
         const valid = await bcrypt.compare(password, user.password);
         if (valid) {
             const sessionToken = Buffer.from(`${username}:${Date.now()}:${ADMIN_SECRET_KEY}`).toString('base64');
@@ -350,28 +264,53 @@ app.post('/api/admin/login', async (req, res) => {
     });
 });
 
-// ============ VERIFY TOKEN ============
 app.get('/api/admin/verify', (req, res) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-        return res.json({ valid: false });
-    }
-    
+    if (!token) return res.json({ valid: false });
     try {
         const decoded = Buffer.from(token, 'base64').toString();
         const [username, timestamp, secretKey] = decoded.split(':');
-        
         if (username === ADMIN_USERNAME && secretKey === ADMIN_SECRET_KEY) {
             const hoursSinceLogin = (Date.now() - parseInt(timestamp)) / (1000 * 60 * 60);
-            if (hoursSinceLogin < 24) {
-                return res.json({ valid: true });
-            }
+            if (hoursSinceLogin < 24) return res.json({ valid: true });
         }
         res.json({ valid: false });
     } catch (error) {
         res.json({ valid: false });
     }
+});
+
+// ============ API CHANGE PASSWORD ============
+app.post('/api/admin/change-password', async (req, res) => {
+    const { oldPassword, newPassword, secretKey } = req.body;
+    
+    if (secretKey !== ADMIN_SECRET_KEY) {
+        return res.status(401).json({ success: false, message: 'Secret Key salah!' });
+    }
+    
+    if (!newPassword || newPassword.length < 6) {
+        return res.json({ success: false, message: 'Password baru minimal 6 karakter!' });
+    }
+    
+    db.get('SELECT * FROM admin WHERE id = 1', async (err, user) => {
+        if (err || !user) {
+            return res.json({ success: false, message: 'Admin tidak ditemukan!' });
+        }
+        
+        const valid = await bcrypt.compare(oldPassword, user.password);
+        if (!valid) {
+            return res.json({ success: false, message: 'Password lama salah!' });
+        }
+        
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        
+        db.run('UPDATE admin SET password = ? WHERE id = 1', [hashedPassword], (err) => {
+            if (err) {
+                return res.json({ success: false, message: 'Gagal mengupdate password!' });
+            }
+            res.json({ success: true, message: 'Password berhasil diubah!' });
+        });
+    });
 });
 
 // ============ BACKUP & RESTORE DATABASE ============
@@ -384,7 +323,6 @@ async function backupDatabase() {
                 resolve(rows || []);
             });
         });
-        
         fs.writeFileSync(BACKUP_FILE, JSON.stringify(news, null, 2));
         console.log(`💾 Backup: ${news.length} berita`);
     } catch (error) {
@@ -396,14 +334,12 @@ async function restoreDatabase() {
     try {
         if (fs.existsSync(BACKUP_FILE)) {
             const backup = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
-            
             if (backup.length > 0) {
                 const count = await new Promise((resolve) => {
                     db.get('SELECT COUNT(*) as count FROM news', (err, row) => {
                         resolve(row ? row.count : 0);
                     });
                 });
-                
                 if (count === 0) {
                     for (const news of backup) {
                         await new Promise((resolve) => {
@@ -424,67 +360,40 @@ async function restoreDatabase() {
     }
 }
 
-// ============ FILTER BERITA ============
 function isValidFootballNews(title) {
     const titleLower = title.toLowerCase();
-    
     for (const forbidden of FORBIDDEN_KEYWORDS) {
-        if (titleLower.includes(forbidden)) {
-            return false;
-        }
+        if (titleLower.includes(forbidden)) return false;
     }
-    
-    const footballKeywords = [
-        'sepakbola', 'bola', 'liga', 'piala', 'champions', 'premier', 'serie', 
-        'bundesliga', 'ligue', 'persija', 'persib', 'timnas', 'madrid', 
-        'barcelona', 'manchester', 'liverpool', 'juventus', 'inter', 'milan', 
-        'psg', 'bayern', 'transfer', 'resmi', 'gabung', 'hasil', 'skor'
-    ];
-    
+    const footballKeywords = ['sepakbola', 'bola', 'liga', 'piala', 'champions', 'premier', 'serie', 'bundesliga', 'ligue', 'persija', 'persib', 'timnas', 'madrid', 'barcelona', 'manchester', 'liverpool', 'juventus', 'inter', 'milan', 'psg', 'bayern', 'transfer', 'resmi', 'gabung', 'hasil', 'skor'];
     for (const keyword of footballKeywords) {
-        if (titleLower.includes(keyword)) {
-            return true;
-        }
+        if (titleLower.includes(keyword)) return true;
     }
-    
     return false;
 }
 
-// ============ DETEKSI KATEGORI ============
 function detectCategory(title) {
     const titleLower = title.toLowerCase();
-    
     for (const [category, config] of Object.entries(FOOTBALL_CATEGORIES)) {
         for (const keyword of config.keywords) {
-            if (titleLower.includes(keyword)) {
-                return category;
-            }
+            if (titleLower.includes(keyword)) return category;
         }
     }
     return 'Berita Bola';
 }
 
-// ============ CEK DUPLIKAT (LEBIH KETAT) ============
 async function isDuplicate(title) {
     return new Promise((resolve) => {
         const cleanTitle = title.toLowerCase().replace(/[^\w\s]/gi, '').substring(0, 80);
-        
-        db.get(
-            `SELECT id FROM news WHERE LOWER(REPLACE(REPLACE(title, '?', ''), '!', '')) LIKE ?`,
-            [`%${cleanTitle}%`],
-            (err, row) => {
-                resolve(!!row);
-            }
-        );
+        db.get(`SELECT id FROM news WHERE LOWER(REPLACE(REPLACE(title, '?', ''), '!', '')) LIKE ?`, [`%${cleanTitle}%`], (err, row) => {
+            resolve(!!row);
+        });
     });
 }
 
-// ============ CLEAN CONTENT (BERSIHKAN METADATA) ============
 function cleanContent(content) {
     if (!content) return '';
-    
     let clean = content;
-    
     const patterns = [
         /Baca juga:.*?(?=\.|$)/gi, /Baca Juga:.*?(?=\.|$)/gi, /Advertisement/gi,
         /SCROLL TO CONTINUE WITH CONTENT/gi, /Pilihan Redaksi.*?(?=\.|$)/gi,
@@ -501,75 +410,42 @@ function cleanContent(content) {
         /Diterbitkan:.*?(?=\.|$)/gi, /Diperbarui:.*?(?=\.|$)/gi,
         /Published:.*?(?=\.|$)/gi, /Updated:.*?(?=\.|$)/gi, /Tanggal:.*?(?=\.|$)/gi
     ];
-    
     for (const pattern of patterns) {
         clean = clean.replace(pattern, '');
     }
-    
     clean = clean.replace(/https?:\/\/[^\s]+/gi, '');
     clean = clean.replace(/\s+/g, ' ');
     clean = clean.trim();
-    
     return clean;
 }
 
-// ============ DOWNLOAD GAMBAR (VALIDASI URL) ============
 async function downloadImage(imageUrl, retryCount = 0) {
     if (!imageUrl || !imageUrl.startsWith('http')) return null;
-    
-    if (!fs.existsSync('uploads')) {
-        fs.mkdirSync('uploads', { recursive: true });
-    }
-    
-    // Validasi ekstensi gambar
+    if (!fs.existsSync('uploads')) fs.mkdirSync('uploads', { recursive: true });
     const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
     const urlLower = imageUrl.toLowerCase();
     let hasValidExt = false;
     for (const ext of validExtensions) {
-        if (urlLower.includes(ext)) {
-            hasValidExt = true;
-            break;
-        }
+        if (urlLower.includes(ext)) { hasValidExt = true; break; }
     }
-    
-    if (!hasValidExt) {
-        console.log(`      📸 URL gambar tidak valid (ekstensi): ${imageUrl.substring(0, 60)}`);
-        return null;
-    }
-    
-    const userAgents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
-    ];
+    if (!hasValidExt) return null;
+    const userAgents = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'];
     const randomUA = userAgents[Math.floor(Math.random() * userAgents.length)];
-    
     try {
         let cleanUrl = imageUrl.split('?')[0];
         cleanUrl = cleanUrl.split('#')[0];
         cleanUrl = cleanUrl.replace(/[<>"']/g, '');
-        
         const response = await axios.get(cleanUrl, {
             responseType: 'arraybuffer',
             timeout: 15000,
-            headers: {
-                'User-Agent': randomUA,
-                'Accept': 'image/webp,image/apng,image/jpeg,image/png,image/*,*/*;q=0.8',
-                'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
-                'Referer': 'https://www.google.com/'
-            },
+            headers: { 'User-Agent': randomUA, 'Accept': 'image/webp,image/apng,image/jpeg,image/png,image/*,*/*;q=0.8', 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8', 'Referer': 'https://www.google.com/' },
             maxRedirects: 5
         });
-        
         const fileSize = response.data ? response.data.length : 0;
-        
         if (fileSize < 10240) {
-            if (retryCount < 1) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                return downloadImage(imageUrl, retryCount + 1);
-            }
+            if (retryCount < 1) { await new Promise(resolve => setTimeout(resolve, 1000)); return downloadImage(imageUrl, retryCount + 1); }
             return null;
         }
-        
         let ext = 'jpg';
         const contentType = response.headers['content-type'];
         if (contentType) {
@@ -577,70 +453,33 @@ async function downloadImage(imageUrl, retryCount = 0) {
             else if (contentType.includes('webp')) ext = 'webp';
             else if (contentType.includes('jpeg')) ext = 'jpg';
         }
-        
         const filename = `img_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
         const filepath = path.join(__dirname, 'uploads', filename);
         fs.writeFileSync(filepath, response.data);
-        
-        if (fs.existsSync(filepath) && fs.statSync(filepath).size >= 10240) {
-            console.log(`      ✅ Gambar OK (${(fileSize / 1024).toFixed(0)}KB)`);
-            return filename;
-        }
-        
+        if (fs.existsSync(filepath) && fs.statSync(filepath).size >= 10240) return filename;
         return null;
-        
     } catch (error) {
-        if (retryCount < 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return downloadImage(imageUrl, retryCount + 1);
-        }
+        if (retryCount < 1) { await new Promise(resolve => setTimeout(resolve, 1000)); return downloadImage(imageUrl, retryCount + 1); }
         return null;
     }
 }
 
-// ============ AMBIL GAMBAR DARI LINK ARTIKEL ============
 async function extractImageFromArticle(url) {
     if (!url) return null;
-    
     try {
-        const response = await axios.get(url, {
-            timeout: 10000,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
-            }
-        });
-        
+        const response = await axios.get(url, { timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36' } });
         const $ = cheerio.load(response.data);
-        
-        const selectors = [
-            'meta[property="og:image"]', 'meta[name="twitter:image"]',
-            'article img', '.article-content img', '.post-content img',
-            '.entry-content img', '.detail-text img', '.content img'
-        ];
-        
+        const selectors = ['meta[property="og:image"]', 'meta[name="twitter:image"]', 'article img', '.article-content img', '.post-content img', '.entry-content img', '.detail-text img', '.content img'];
         for (const selector of selectors) {
             let imgSrc = null;
-            if (selector.startsWith('meta')) {
-                imgSrc = $(selector).attr('content');
-            } else {
-                const img = $(selector).first();
-                if (img.length) {
-                    imgSrc = img.attr('src') || img.attr('data-src');
-                }
-            }
-            
-            if (imgSrc && imgSrc.startsWith('http') && !imgSrc.includes('placeholder') && !imgSrc.includes('default')) {
-                return imgSrc.split('?')[0];
-            }
+            if (selector.startsWith('meta')) { imgSrc = $(selector).attr('content'); }
+            else { const img = $(selector).first(); if (img.length) { imgSrc = img.attr('src') || img.attr('data-src'); } }
+            if (imgSrc && imgSrc.startsWith('http') && !imgSrc.includes('placeholder') && !imgSrc.includes('default')) { return imgSrc.split('?')[0]; }
         }
-        
         return null;
-    } catch (error) {
-        return null;
-    }
+    } catch (error) { return null; }
 }
 
-// ============ SCRAPING BERITA (LEBIH BERSIH) ============
 const NEWS_SOURCES = [
     { name: 'Bola.net - Terbaru', url: 'https://www.bola.net/', category: 'Berita Bola' },
     { name: 'Bola.net - Liga Inggris', url: 'https://www.bola.net/inggris/', category: 'Liga Inggris' },
@@ -653,434 +492,194 @@ const NEWS_SOURCES = [
 
 async function scrapeNews() {
     const allArticles = [];
-    
     for (const source of NEWS_SOURCES) {
         try {
             console.log(`  🔍 ${source.name}...`);
-            
-            const response = await axios.get(source.url, {
-                timeout: 15000,
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-                }
-            });
-            
+            const response = await axios.get(source.url, { timeout: 15000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' } });
             const $ = cheerio.load(response.data);
             let articlesCount = 0;
             const processedLinks = new Set();
-            
             $('a').each((i, elem) => {
                 const href = $(elem).attr('href');
                 const text = $(elem).text().trim();
-                
                 if (href && text && text.length > 25 && text.length < 200) {
                     let fullUrl = href;
-                    if (!fullUrl.startsWith('http')) {
-                        try {
-                            const urlObj = new URL(fullUrl, source.url);
-                            fullUrl = urlObj.href;
-                        } catch(e) { return; }
-                    }
-                    
+                    if (!fullUrl.startsWith('http')) { try { const urlObj = new URL(fullUrl, source.url); fullUrl = urlObj.href; } catch(e) { return; } }
                     if (processedLinks.has(fullUrl)) return;
                     processedLinks.add(fullUrl);
-                    
-                    if (fullUrl && isValidFootballNews(text) && 
-                        !fullUrl.includes('tag/') && !fullUrl.includes('/indeks') && 
-                        !fullUrl.includes('login') && !fullUrl.includes('register')) {
-                        
+                    if (fullUrl && isValidFootballNews(text) && !fullUrl.includes('tag/') && !fullUrl.includes('/indeks') && !fullUrl.includes('login') && !fullUrl.includes('register')) {
                         let imageUrl = null;
                         const parent = $(elem).closest('article, .article, .post, .item, .list-item');
-                        if (parent.length) {
-                            const img = parent.find('img').first();
-                            if (img.length) {
-                                imageUrl = img.attr('src') || img.attr('data-src');
-                                if (imageUrl && !imageUrl.startsWith('http')) {
-                                    try {
-                                        const imgUrlObj = new URL(imageUrl, source.url);
-                                        imageUrl = imgUrlObj.href;
-                                    } catch(e) {}
-                                }
-                            }
-                        }
-                        
-                        if (!imageUrl) {
-                            const img = $(elem).find('img').first();
-                            if (img.length) {
-                                imageUrl = img.attr('src') || img.attr('data-src');
-                                if (imageUrl && !imageUrl.startsWith('http')) {
-                                    try {
-                                        const imgUrlObj = new URL(imageUrl, source.url);
-                                        imageUrl = imgUrlObj.href;
-                                    } catch(e) {}
-                                }
-                            }
-                        }
-                        
+                        if (parent.length) { const img = parent.find('img').first(); if (img.length) { imageUrl = img.attr('src') || img.attr('data-src'); if (imageUrl && !imageUrl.startsWith('http')) { try { const imgUrlObj = new URL(imageUrl, source.url); imageUrl = imgUrlObj.href; } catch(e) {} } } }
+                        if (!imageUrl) { const img = $(elem).find('img').first(); if (img.length) { imageUrl = img.attr('src') || img.attr('data-src'); if (imageUrl && !imageUrl.startsWith('http')) { try { const imgUrlObj = new URL(imageUrl, source.url); imageUrl = imgUrlObj.href; } catch(e) {} } } }
                         const category = detectCategory(text);
-                        
-                        allArticles.push({
-                            title: fixTitle(text),
-                            link: fullUrl,
-                            image: imageUrl,
-                            source: source.name,
-                            category: category,
-                            published_at: new Date().toISOString()
-                        });
+                        allArticles.push({ title: fixTitle(text), link: fullUrl, image: imageUrl, source: source.name, category: category, published_at: new Date().toISOString() });
                         articlesCount++;
                     }
                 }
             });
-            
             console.log(`    ✅ ${articlesCount} berita`);
             await sleep(500);
-            
-        } catch (error) {
-            console.log(`    ⚠️ Gagal: ${error.message}`);
-        }
+        } catch (error) { console.log(`    ⚠️ Gagal: ${error.message}`); }
     }
-    
     return allArticles;
 }
 
-// ============ GOOGLE NEWS SCRAPING ============
 async function scrapeGoogleNews() {
-    const queries = [
-        'sepakbola+terbaru', 'transfer+pemain', 'hasil+pertandingan',
-        'liga+inggris', 'liga+spanyol', 'liga+italia'
-    ];
+    const queries = ['sepakbola+terbaru', 'transfer+pemain', 'hasil+pertandingan', 'liga+inggris', 'liga+spanyol', 'liga+italia'];
     const articles = [];
-    
     for (const query of queries) {
         try {
             const url = `https://news.google.com/rss/search?q=${query}&hl=id&gl=ID&ceid=ID:id`;
             const response = await axios.get(url, { timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0' } });
             const $ = cheerio.load(response.data, { xmlMode: true });
-            
             $('item').each((i, item) => {
                 if (i >= 5) return;
                 const title = $(item).find('title').text();
                 const link = $(item).find('link').text();
                 let pubDate = $(item).find('pubDate').text();
-                
                 if (title && title.length > 25 && link && isValidFootballNews(title)) {
-                    articles.push({
-                        title: fixTitle(title),
-                        link: link,
-                        image: null,
-                        source: 'Google News',
-                        category: detectCategory(title),
-                        published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString()
-                    });
+                    articles.push({ title: fixTitle(title), link: link, image: null, source: 'Google News', category: detectCategory(title), published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString() });
                 }
             });
             await sleep(300);
         } catch (error) {}
     }
-    
     return articles;
 }
 
-// ============ AMBIL KONTEN ARTIKEL ============
 async function scrapeArticleContent(url) {
     if (!url) return null;
-    
     try {
-        const response = await axios.get(url, {
-            timeout: 8000,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
-            }
-        });
-        
+        const response = await axios.get(url, { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36' } });
         const $ = cheerio.load(response.data);
-        
         $('script, style, iframe, .ad, .ads, .social-share, .comment, nav, header, footer, .sidebar').remove();
-        
         let content = '';
-        const selectors = [
-            'article', '.article-content', '.post-content', '.entry-content',
-            '.detail-text', '.article-body', '.content-detail', '.story__content',
-            '.news-content', '#content', 'main'
-        ];
-        
+        const selectors = ['article', '.article-content', '.post-content', '.entry-content', '.detail-text', '.article-body', '.content-detail', '.story__content', '.news-content', '#content', 'main'];
         for (const selector of selectors) {
             const element = $(selector);
-            if (element.length) {
-                let text = element.text().trim();
-                if (text.length > 200) {
-                    content = text;
-                    break;
-                }
-            }
+            if (element.length) { let text = element.text().trim(); if (text.length > 200) { content = text; break; } }
         }
-        
-        if (!content) {
-            const paragraphs = [];
-            $('p').each((i, p) => {
-                const text = $(p).text().trim();
-                if (text.length > 50 && !text.includes('Cookie') && !text.includes('Privacy')) {
-                    paragraphs.push(text);
-                }
-            });
-            content = paragraphs.join(' ');
-        }
-        
+        if (!content) { const paragraphs = []; $('p').each((i, p) => { const text = $(p).text().trim(); if (text.length > 50 && !text.includes('Cookie') && !text.includes('Privacy')) paragraphs.push(text); }); content = paragraphs.join(' '); }
         content = cleanContent(content);
-        
-        // Potong cerdas (ambil 4-5 kalimat pertama yang bermakna)
-        if (content.length > 800) {
-            const sentences = content.split(/[.!?]+/);
-            let short = '';
-            let count = 0;
-            for (const sentence of sentences) {
-                const cleanSentence = sentence.trim();
-                if (cleanSentence.length > 30 && count < 5) {
-                    short += cleanSentence + '. ';
-                    count++;
-                }
-            }
-            content = short.length > 150 ? short : content.substring(0, 800);
-        }
-        
+        if (content.length > 800) { const sentences = content.split(/[.!?]+/); let short = ''; let count = 0; for (const sentence of sentences) { const cleanSentence = sentence.trim(); if (cleanSentence.length > 30 && count < 5) { short += cleanSentence + '. '; count++; } } content = short.length > 150 ? short : content.substring(0, 800); }
         return content.length > 200 ? content : null;
-    } catch (error) {
-        return null;
-    }
+    } catch (error) { return null; }
 }
 
-// ============ FIX TITLE ============
 function fixTitle(title) {
     if (!title) return 'Berita Sepakbola Terbaru';
-    
     let fixed = title;
     fixed = fixed.replace(/^[^a-zA-Z0-9\s]+/, '');
     fixed = fixed.replace(/[\u{1F600}-\u{1F6FF}]/gu, '');
     fixed = fixed.replace(/[!?]+$/, '');
     fixed = fixed.replace(/\s+/g, ' ').trim();
-    
-    if (fixed.length > 0) {
-        fixed = fixed.charAt(0).toUpperCase() + fixed.slice(1);
-    }
-    
+    if (fixed.length > 0) fixed = fixed.charAt(0).toUpperCase() + fixed.slice(1);
     return fixed.substring(0, 120) || 'Berita Sepakbola Terbaru';
 }
 
-// ============ BUAT DESKRIPSI DENGAN AI REWRITE & INTERNAL LINKING ============
 function createDescription(title, originalContent, category, newsId) {
     const titleClean = title.replace(/[!?]+$/, '');
-    
-    // Gunakan AI rewrite untuk konten
     let main = originalContent || '';
-    
     if (!main || main.length < 100) {
         switch(category) {
-            case 'Piala Dunia 2026':
-                main = `Piala Dunia 2026 akan menjadi edisi istimewa karena digelar di tiga negara: Amerika Serikat, Meksiko, dan Kanada. Turnamen ini akan diikuti 48 tim untuk pertama kalinya. Pertandingan pembukaan akan digelar pada 12 Juni 2026 di Stadion Azteca, Meksiko City.`;
-                break;
-            case 'Transfer Pemain':
-                main = `Bursa transfer pemain selalu menjadi momen yang dinanti. Klub-klub besar Eropa mulai bergerak untuk mendatangkan pemain bintang. Ikuti terus perkembangan transfer terbaru.`;
-                break;
-            case 'Hasil Pertandingan':
-                main = `Hasil pertandingan sepakbola selalu menyajikan drama dan ketegangan hingga menit akhir. Simak skor akhir dan rekap pertandingan hanya di ABAD4D SPORT.`;
-                break;
-            default:
-                main = `Berita terbaru dari dunia sepakbola. ${titleClean} menjadi sorotan utama. Simak update selengkapnya.`;
+            case 'Piala Dunia 2026': main = `Piala Dunia 2026 akan menjadi edisi istimewa karena digelar di tiga negara: Amerika Serikat, Meksiko, dan Kanada. Turnamen ini akan diikuti 48 tim untuk pertama kalinya. Pertandingan pembukaan akan digelar pada 12 Juni 2026 di Stadion Azteca, Meksiko City.`; break;
+            case 'Transfer Pemain': main = `Bursa transfer pemain selalu menjadi momen yang dinanti. Klub-klub besar Eropa mulai bergerak untuk mendatangkan pemain bintang. Ikuti terus perkembangan transfer terbaru.`; break;
+            case 'Hasil Pertandingan': main = `Hasil pertandingan sepakbola selalu menyajikan drama dan ketegangan hingga menit akhir. Simak skor akhir dan rekap pertandingan hanya di ABAD4D SPORT.`; break;
+            default: main = `Berita terbaru dari dunia sepakbola. ${titleClean} menjadi sorotan utama. Simak update selengkapnya.`;
         }
     }
-    
-    // AI Rewrite (buat lebih natural seperti tulisan manusia)
     let rewritten = aiRewrite(main, category);
-    
-    // Tambahkan internal linking
     let withLinks = addInternalLinks(rewritten, newsId, category);
-    
-    // Format akhir
     let final = `${titleClean}\n\n${withLinks}\n\nIkuti terus ABAD4D SPORT untuk berita sepakbola terupdate. #ABAD4DSPORT #BeritaBola #${category.replace(/ /g, '')}`;
     final = final.replace(/\s+/g, ' ');
-    
     return final.substring(0, 3500);
 }
 
-// ============ UPDATE BERITA (POSTING 1 BERITA SETIAP 10 MENIT) ============
 let isUpdating = false;
 let lastPostTime = 0;
-const POST_INTERVAL_MS = 10 * 60 * 1000; // 10 menit
+const POST_INTERVAL_MS = 10 * 60 * 1000;
 
 async function updateNews() {
     const now = getWIB();
     const nowMs = Date.now();
-    
     if (nowMs - lastPostTime < POST_INTERVAL_MS && lastPostTime > 0) {
         const remaining = Math.round((POST_INTERVAL_MS - (nowMs - lastPostTime)) / 1000);
         console.log(`\n⏳ ${now} WIB - Post berikutnya: ${Math.floor(remaining / 60)}m ${remaining % 60}s lagi`);
         return;
     }
-    
-    if (isUpdating) {
-        console.log(`\n⏳ ${now} WIB - Update sedang berjalan...`);
-        return;
-    }
-    
+    if (isUpdating) { console.log(`\n⏳ ${now} WIB - Update sedang berjalan...`); return; }
     isUpdating = true;
-    
     console.log('\n' + '='.repeat(60));
     console.log(`⚽ ${now} WIB - MENCARI BERITA BARU (Setiap 10 menit)`);
     console.log('='.repeat(60));
-    
     let allArticles = [];
-    
     console.log('\n📡 SCRAPING BERITA...');
-    const [webArticles, googleArticles] = await Promise.all([
-        scrapeNews(),
-        scrapeGoogleNews()
-    ]);
-    
+    const [webArticles, googleArticles] = await Promise.all([scrapeNews(), scrapeGoogleNews()]);
     console.log(`\n  📰 Website: ${webArticles.length} berita`);
     console.log(`  📰 Google News: ${googleArticles.length} berita`);
     allArticles.push(...webArticles, ...googleArticles);
-    
-    // Filter unik
     const unique = [];
     const seen = new Set();
     for (const article of allArticles) {
         const key = article.title.substring(0, 80).toLowerCase().replace(/[^\w\s]/gi, '');
-        if (!seen.has(key)) {
-            seen.add(key);
-            unique.push(article);
-        }
+        if (!seen.has(key)) { seen.add(key); unique.push(article); }
     }
-    
     console.log(`\n📊 TOTAL BERITA UNIK: ${unique.length}`);
     unique.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
-    
     let posted = false;
     let checkedCount = 0;
-    
     for (const article of unique) {
         if (posted) break;
         checkedCount++;
-        
         const category = detectCategory(article.title);
-        
-        // Cek duplikat
         const isDuplicateNews = await isDuplicate(article.title);
-        
-        if (isDuplicateNews) {
-            console.log(`  ⏭️ [DUPLIKAT] ${article.title.substring(0, 50)}...`);
-            continue;
-        }
-        
+        if (isDuplicateNews) { console.log(`  ⏭️ [DUPLIKAT] ${article.title.substring(0, 50)}...`); continue; }
         console.log(`\n  📌 [${category}] ${article.title.substring(0, 55)}...`);
-        
         let content = null;
-        if (article.link) {
-            console.log(`      🔗 Mengambil konten...`);
-            content = await scrapeArticleContent(article.link);
-            await sleep(300);
-        }
-        
+        if (article.link) { console.log(`      🔗 Mengambil konten...`); content = await scrapeArticleContent(article.link); await sleep(300); }
         let imageFile = null;
-        
-        if (article.image) {
-            imageFile = await downloadImage(article.image);
-        }
-        
-        if (!imageFile && article.link) {
-            console.log(`      🔍 Cari gambar alternatif...`);
-            const fallbackImage = await extractImageFromArticle(article.link);
-            if (fallbackImage) {
-                imageFile = await downloadImage(fallbackImage);
-            }
-        }
-        
-        if (!imageFile) {
-            console.log(`      ❌ GAGAL gambar - cari berita lain`);
-            continue;
-        }
-        
-        // Buat ID sementara untuk internal linking
+        if (article.image) imageFile = await downloadImage(article.image);
+        if (!imageFile && article.link) { console.log(`      🔍 Cari gambar alternatif...`); const fallbackImage = await extractImageFromArticle(article.link); if (fallbackImage) imageFile = await downloadImage(fallbackImage); }
+        if (!imageFile) { console.log(`      ❌ GAGAL gambar - cari berita lain`); continue; }
         const tempId = Date.now();
         const finalContent = createDescription(article.title, content, category, tempId);
-        
         await new Promise((resolve) => {
-            db.run(
-                `INSERT INTO news (title, content, image, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?)`,
-                [
-                    article.title.substring(0, 200),
-                    finalContent,
-                    imageFile,
-                    category,
-                    'published',
-                    article.published_at
-                ],
+            db.run(`INSERT INTO news (title, content, image, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?)`,
+                [article.title.substring(0, 200), finalContent, imageFile, category, 'published', article.published_at],
                 (err) => {
-                    if (err) {
-                        console.log(`      ❌ Gagal simpan: ${err.message}`);
-                    } else {
-                        posted = true;
-                        lastPostTime = Date.now();
-                        console.log(`      ✅ BERITA BERHASIL DIPOSTING!`);
-                        console.log(`      📅 Next post: 10 menit lagi`);
-                        backupDatabase();
-                        // Update sitemap setelah post
-                        generateSitemap();
-                    }
+                    if (err) { console.log(`      ❌ Gagal simpan: ${err.message}`); }
+                    else { posted = true; lastPostTime = Date.now(); console.log(`      ✅ BERITA BERHASIL DIPOSTING!`); console.log(`      📅 Next post: 10 menit lagi`); backupDatabase(); generateSitemap(); }
                     resolve();
-                }
-            );
+                });
         });
-        
         await sleep(500);
     }
-    
-    if (!posted) {
-        console.log(`\n⚠️ TIDAK ADA BERITA BARU!`);
-        console.log(`   📊 Total dicek: ${checkedCount} berita`);
-        const totalNews = await getTotalNews();
-        console.log(`   💾 Total di database: ${totalNews}`);
-    }
-    
+    if (!posted) { console.log(`\n⚠️ TIDAK ADA BERITA BARU!`); console.log(`   📊 Total dicek: ${checkedCount} berita`); const totalNews = await getTotalNews(); console.log(`   💾 Total di database: ${totalNews}`); }
     console.log('\n' + '='.repeat(60));
     console.log(`✅ UPDATE SELESAI!`);
     console.log(`   📰 Status: ${posted ? 'BERHASIL POSTING' : 'TIDAK ADA BERITA'}`);
     console.log('='.repeat(60) + '\n');
-    
     isUpdating = false;
 }
 
 async function getTotalNews() {
     return new Promise((resolve) => {
-        db.get('SELECT COUNT(*) as count FROM news', (err, row) => {
-            resolve(row ? row.count : 0);
-        });
+        db.get('SELECT COUNT(*) as count FROM news', (err, row) => { resolve(row ? row.count : 0); });
     });
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+function getWIB() { return new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
 
-function getWIB() {
-    return new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
-// ============ SETUP DATABASE & STORAGE ============
-if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads', { recursive: true });
-}
-
+if (!fs.existsSync('uploads')) fs.mkdirSync('uploads', { recursive: true });
 const storage = multer.diskStorage({
     destination: (req, file, cb) => { cb(null, 'uploads/'); },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
-    }
+    filename: (req, file, cb) => { cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname)); }
 });
 const upload = multer({ storage: storage });
 
 const db = new sqlite3.Database('pialadunia.db');
-
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS news (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1093,11 +692,9 @@ db.serialize(() => {
         views INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
-    
     db.run(`CREATE INDEX IF NOT EXISTS idx_title ON news(title)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_published_at ON news(published_at)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_category ON news(category)`);
-    
     db.run(`CREATE TABLE IF NOT EXISTS admin (
         id INTEGER PRIMARY KEY,
         username TEXT UNIQUE,
@@ -1110,14 +707,12 @@ bcrypt.hash('admin123', 10).then(hash => {
     console.log('✅ Admin: admin / admin123');
 });
 
-// Restore database dan generate sitemap
 setTimeout(async () => {
     await restoreDatabase();
     await generateSitemap();
     await submitToGoogle();
 }, 1000);
 
-// ============ API ENDPOINTS ============
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     db.get('SELECT * FROM admin WHERE username = ?', [username], async (err, user) => {
@@ -1142,19 +737,12 @@ app.get('/api/news/:id', (req, res) => {
 app.post('/api/news', upload.single('image'), (req, res) => {
     const { title, content, category, status } = req.body;
     const image = req.file ? req.file.filename : null;
-    if (!title || !content || !image) {
-        return res.status(400).json({ message: 'Judul, isi, dan gambar harus diisi!' });
-    }
+    if (!title || !content || !image) return res.status(400).json({ message: 'Judul, isi, dan gambar harus diisi!' });
     db.run('INSERT INTO news (title, content, image, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?)',
         [fixTitle(title), content, image, category || 'Berita Bola', status || 'published', new Date().toISOString()],
         function(err) {
-            if (err) {
-                res.status(500).json({ message: 'Gagal menyimpan' });
-            } else {
-                backupDatabase();
-                generateSitemap();
-                res.json({ message: 'Berita ditambahkan!', id: this.lastID });
-            }
+            if (err) res.status(500).json({ message: 'Gagal menyimpan' });
+            else { backupDatabase(); generateSitemap(); res.json({ message: 'Berita ditambahkan!', id: this.lastID }); }
         });
 });
 
@@ -1165,21 +753,13 @@ app.put('/api/news/:id', upload.single('image'), (req, res) => {
         db.run('UPDATE news SET title = ?, content = ?, image = ?, category = ?, status = ? WHERE id = ?',
             [fixTitle(title), content, req.file.filename, category, status, id], (err) => {
                 if (err) res.status(500).json({ message: 'Gagal update' });
-                else {
-                    backupDatabase();
-                    generateSitemap();
-                    res.json({ message: 'Berita diupdate!' });
-                }
+                else { backupDatabase(); generateSitemap(); res.json({ message: 'Berita diupdate!' }); }
             });
     } else {
         db.run('UPDATE news SET title = ?, content = ?, category = ?, status = ? WHERE id = ?',
             [fixTitle(title), content, category, status, id], (err) => {
                 if (err) res.status(500).json({ message: 'Gagal update' });
-                else {
-                    backupDatabase();
-                    generateSitemap();
-                    res.json({ message: 'Berita diupdate!' });
-                }
+                else { backupDatabase(); generateSitemap(); res.json({ message: 'Berita diupdate!' }); }
             });
     }
 });
@@ -1187,11 +767,7 @@ app.put('/api/news/:id', upload.single('image'), (req, res) => {
 app.delete('/api/news/:id', (req, res) => {
     db.run('DELETE FROM news WHERE id = ?', [req.params.id], function(err) {
         if (err) res.status(500).json({ message: 'Gagal hapus' });
-        else {
-            backupDatabase();
-            generateSitemap();
-            res.json({ message: 'Berita dihapus!' });
-        }
+        else { backupDatabase(); generateSitemap(); res.json({ message: 'Berita dihapus!' }); }
     });
 });
 
@@ -1200,47 +776,23 @@ app.post('/api/fetch-news', async (req, res) => {
     res.json({ message: 'Update berita sepakbola selesai!' });
 });
 
-// Endpoint untuk ping (keep alive)
-app.get('/ping', (req, res) => {
-    res.status(200).send('OK');
-});
+app.get('/ping', (req, res) => { res.status(200).send('OK'); });
 
-// Endpoint SEO stats
 app.get('/api/seo/stats', async (req, res) => {
     const totalNews = await getTotalNews();
     const categories = Object.keys(FOOTBALL_CATEGORIES);
-    res.json({
-        totalNews,
-        categories: categories.length,
-        sitemapUrl: `${SITE_URL}/sitemap.xml`,
-        robotsUrl: `${SITE_URL}/robots.txt`,
-        lastUpdate: new Date().toISOString()
-    });
+    res.json({ totalNews, categories: categories.length, sitemapUrl: `${SITE_URL}/sitemap.xml`, robotsUrl: `${SITE_URL}/robots.txt`, lastUpdate: new Date().toISOString() });
 });
 
-// ============ ROUTE UNTUK HALAMAN STATIS ============
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/login.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-app.get('/admin.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
+app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
+app.get('/login.html', (req, res) => { res.sendFile(path.join(__dirname, 'login.html')); });
+app.get('/admin.html', (req, res) => { res.sendFile(path.join(__dirname, 'admin.html')); });
 app.get('*.html', (req, res) => {
     const filePath = path.join(__dirname, req.path);
-    if (fs.existsSync(filePath)) {
-        res.sendFile(filePath);
-    } else {
-        res.status(404).send('File not found');
-    }
+    if (fs.existsSync(filePath)) res.sendFile(filePath);
+    else res.status(404).send('File not found');
 });
 
-// ============ JALANKAN SERVER ============
 app.listen(PORT, async () => {
     console.log(`\n⚽⚽⚽ ABAD4D SPORT - BOT BERITA SEPAKBOLA CERDAS ⚽⚽⚽`);
     console.log(`📍 Server: http://localhost:${PORT}`);
@@ -1255,23 +807,14 @@ app.listen(PORT, async () => {
     console.log(`   ✅ Scraping Lebih Bersih`);
     console.log(`   ✅ Anti Duplicate Kuat`);
     console.log(`   ✅ Gambar Valid (Cek URL)`);
+    console.log(`   ✅ Ganti Password Admin`);
     console.log(`\n📡 SUMBER: Bola.net, Goal.com, Google News`);
     console.log(`⏰ UPDATE: Setiap 10 menit (1 postingan)`);
     console.log(`📊 SITEMAP: ${SITE_URL}/sitemap.xml`);
     console.log(`🤖 ROBOTS: ${SITE_URL}/robots.txt`);
     console.log(`\n📰 Memulai update pertama...\n`);
-    
     await updateNews();
-    
-    setInterval(async () => {
-        await updateNews();
-    }, 60 * 1000);
-    
-    setInterval(() => {
-        backupDatabase();
-        generateSitemap();
-        submitToGoogle();
-    }, 60 * 60 * 1000);
-    
+    setInterval(async () => { await updateNews(); }, 60 * 1000);
+    setInterval(() => { backupDatabase(); generateSitemap(); submitToGoogle(); }, 60 * 60 * 1000);
     console.log('⏰ Timer aktif: Pengecekan setiap 1 menit, posting setiap 10 menit\n');
 });
