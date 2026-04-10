@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Sitemap: https://abad4d-sport.onrender.com/sitemap.xml
+Disallow: /api/
+Disallow: /admin.html
+Disallow: /login.html
