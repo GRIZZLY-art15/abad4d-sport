@@ -7,6 +7,8 @@
     <meta name="description" content="ABAD4D SPORT - Portal berita Piala Dunia 2026 dengan update jadwal, hasil, dan analisis mendalam seputar World Cup 2026 di Amerika Serikat, Meksiko, dan Kanada.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- AOS Animation Library untuk Scroll Reveal -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <!-- FAVICON -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://the.splg.site/images/2026/04/09/fw.png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://the.splg.site/images/2026/04/09/fw.png">
@@ -26,16 +28,21 @@
             overflow-x: hidden;
         }
 
-        /* Custom Scrollbar */
+        /* Custom Scrollbar dengan efek glow */
         ::-webkit-scrollbar {
-            width: 5px;
+            width: 6px;
         }
         ::-webkit-scrollbar-track {
             background: #1A1F2A;
+            border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #C9A03D;
+            background: linear-gradient(135deg, #C9A03D, #a07d2c);
             border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #d4b04c, #b88d2e);
+            box-shadow: 0 0 8px rgba(201, 160, 61, 0.6);
         }
 
         /* Loading Screen */
@@ -60,10 +67,11 @@
             color: #C9A03D;
             animation: pulse 1.5s ease-in-out infinite;
             margin-bottom: 20px;
+            filter: drop-shadow(0 0 10px rgba(201,160,61,0.5));
         }
         @keyframes pulse {
             0%, 100% { opacity: 0.6; transform: scale(0.95); text-shadow: 0 0 0 rgba(201,160,61,0); }
-            50% { opacity: 1; transform: scale(1.05); text-shadow: 0 0 15px rgba(201,160,61,0.5); }
+            50% { opacity: 1; transform: scale(1.05); text-shadow: 0 0 20px rgba(201,160,61,0.8); }
         }
         .loader-text {
             font-size: 0.8rem;
@@ -71,6 +79,23 @@
             color: #C9A03D;
             font-weight: 500;
             text-transform: uppercase;
+            position: relative;
+        }
+        .loader-text::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #C9A03D, transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { width: 0; opacity: 0; }
+            50% { width: 60px; opacity: 1; }
+            100% { width: 0; opacity: 0; }
         }
 
         /* Header Navbar */
@@ -82,6 +107,11 @@
             border-bottom: 1px solid rgba(201, 160, 61, 0.2);
             z-index: 1000;
             padding: 0 4%;
+            transition: all 0.3s ease;
+        }
+        .navbar:hover {
+            border-bottom-color: rgba(201, 160, 61, 0.5);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
         }
         .nav-container {
             max-width: 1400px;
@@ -101,6 +131,12 @@
             background-clip: text;
             color: transparent;
             letter-spacing: -0.5px;
+            transition: all 0.3s;
+        }
+        .logo-area h1:hover {
+            background: linear-gradient(135deg, #C9A03D, #FFFFFF);
+            -webkit-background-clip: text;
+            background-clip: text;
         }
         .logo-area p {
             font-size: 0.6rem;
@@ -132,9 +168,14 @@
             font-size: 0.65rem;
             font-weight: 600;
             color: #C9A03D;
+            animation: pulse-badge 2s infinite;
+        }
+        @keyframes pulse-badge {
+            0%, 100% { border-color: rgba(201, 160, 61, 0.4); }
+            50% { border-color: rgba(201, 160, 61, 0.9); box-shadow: 0 0 8px rgba(201,160,61,0.3); }
         }
 
-        /* Hero Section */
+        /* Hero Section dengan Glowing Neon Text */
         .hero {
             position: relative;
             min-height: 70vh;
@@ -146,6 +187,21 @@
             border-bottom: 1px solid rgba(201, 160, 61, 0.2);
             overflow: hidden;
             padding: 40px 20px;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(201,160,61,0.05), transparent);
+            animation: hero-shine 8s infinite;
+        }
+        @keyframes hero-shine {
+            0% { left: -100%; }
+            50% { left: 100%; }
+            100% { left: 100%; }
         }
         .hero-bg-pattern {
             position: absolute;
@@ -171,7 +227,13 @@
             color: #C9A03D;
             margin-bottom: 20px;
             border: 1px solid rgba(201, 160, 61, 0.3);
+            transition: all 0.3s;
         }
+        .hero-badge:hover {
+            background: rgba(201, 160, 61, 0.3);
+            transform: scale(1.05);
+        }
+        /* ========== GLOWING NEON TEXT ========== */
         .hero h2 {
             font-size: 2rem;
             font-weight: 800;
@@ -183,6 +245,36 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            animation: neonGlow 1.5s ease-in-out infinite alternate;
+            position: relative;
+        }
+        @keyframes neonGlow {
+            from {
+                text-shadow: 0 0 5px #C9A03D, 0 0 10px #C9A03D, 0 0 15px #C9A03D, 0 0 20px #ffd700;
+            }
+            to {
+                text-shadow: 0 0 10px #ffd700, 0 0 20px #C9A03D, 0 0 30px #C9A03D, 0 0 40px #ffd700;
+            }
+        }
+        /* Efek tambahan untuk teks neon */
+        .hero h2 {
+            position: relative;
+            display: inline-block;
+        }
+        .hero h2::before {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #FFFFFF, #C9A03D);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: blur(15px);
+            opacity: 0.5;
+            z-index: -1;
         }
         .hosts {
             display: flex;
@@ -197,6 +289,11 @@
             border-radius: 30px;
             font-size: 0.7rem;
             font-weight: 500;
+            transition: all 0.3s;
+        }
+        .host:hover {
+            background: rgba(201, 160, 61, 0.15);
+            transform: translateY(-2px);
         }
         .countdown {
             background: rgba(0,0,0,0.5);
@@ -213,12 +310,17 @@
         .countdown-item {
             text-align: center;
             min-width: 50px;
+            transition: all 0.3s;
+        }
+        .countdown-item:hover {
+            transform: translateY(-3px);
         }
         .countdown-number {
             font-size: 1.3rem;
             font-weight: 800;
             color: #C9A03D;
             line-height: 1;
+            text-shadow: 0 0 5px rgba(201,160,61,0.5);
         }
         .countdown-label {
             font-size: 0.55rem;
@@ -227,15 +329,22 @@
             color: #8E9AAF;
         }
 
-        /* ============ SLIDESHOW STYLES - DIPERBAIKI UNTUK MOBILE ============ */
-        .slideshow-container {
-            max-width: 100%;
+        /* ========== SLIDESHOW STYLES ========== */
+        .slideshow-wrapper {
+            max-width: 1200px;
             margin: 20px auto 0;
+            padding: 0 16px;
+        }
+        .slideshow-container {
             position: relative;
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4), 0 0 0 1px rgba(201, 160, 61, 0.2);
             background: #1a1f2a;
+            transition: all 0.3s;
+        }
+        .slideshow-container:hover {
+            box-shadow: 0 20px 45px rgba(0,0,0,0.5), 0 0 0 2px rgba(201, 160, 61, 0.4);
         }
         .slide {
             display: none;
@@ -247,29 +356,41 @@
             height: auto;
             display: block;
             object-fit: cover;
+            transition: transform 0.5s ease;
         }
-        /* Ukuran gambar slideshow untuk berbagai device */
+        .slideshow-container:hover .slide img {
+            transform: scale(1.02);
+        }
+        .slide img {
+            aspect-ratio: 16 / 9;
+            min-height: 180px;
+            max-height: 500px;
+        }
         @media (max-width: 480px) {
             .slide img {
                 aspect-ratio: 16 / 9;
+                min-height: 160px;
                 max-height: 220px;
             }
         }
         @media (min-width: 481px) and (max-width: 768px) {
             .slide img {
                 aspect-ratio: 16 / 9;
+                min-height: 200px;
                 max-height: 280px;
             }
         }
         @media (min-width: 769px) and (max-width: 1024px) {
             .slide img {
                 aspect-ratio: 16 / 9;
+                min-height: 250px;
                 max-height: 350px;
             }
         }
         @media (min-width: 1025px) {
             .slide img {
                 aspect-ratio: 16 / 9;
+                min-height: 300px;
                 max-height: 450px;
             }
         }
@@ -278,70 +399,84 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
             padding: 12px;
             text-align: center;
+            transform: translateY(0);
+            transition: transform 0.3s;
+        }
+        .slideshow-container:hover .slide-caption {
+            transform: translateY(-5px);
         }
         .slide-caption h3 {
             font-size: 0.9rem;
             margin-bottom: 4px;
             color: #C9A03D;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
         .slide-caption p {
             font-size: 0.65rem;
             color: #fff;
         }
-        /* Tombol navigasi */
         .prev, .next {
             cursor: pointer;
             position: absolute;
             top: 50%;
             width: auto;
-            padding: 10px;
-            margin-top: -20px;
+            padding: 12px 16px;
+            margin-top: -22px;
             color: white;
             font-weight: bold;
-            font-size: 14px;
-            transition: 0.6s ease;
-            border-radius: 0 3px 3px 0;
+            font-size: 16px;
+            transition: 0.4s ease;
+            border-radius: 0 8px 8px 0;
             user-select: none;
             background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
             z-index: 10;
+            border: 1px solid rgba(201,160,61,0.3);
         }
         .next {
             right: 0;
-            border-radius: 3px 0 0 3px;
+            border-radius: 8px 0 0 8px;
         }
         .prev:hover, .next:hover {
-            background-color: rgba(201,160,61,0.8);
+            background-color: #C9A03D;
+            color: #0B0E14;
+            box-shadow: 0 0 15px rgba(201,160,61,0.5);
         }
-        /* Indikator dot */
         .dots-container {
             text-align: center;
-            padding: 10px 0;
-            background: rgba(0,0,0,0.3);
+            padding: 12px 0;
+            background: rgba(0,0,0,0.2);
         }
         .dot {
             cursor: pointer;
-            height: 8px;
-            width: 8px;
-            margin: 0 4px;
-            background-color: #bbb;
+            height: 10px;
+            width: 10px;
+            margin: 0 5px;
+            background-color: #4a5568;
             border-radius: 50%;
             display: inline-block;
-            transition: background-color 0.6s ease;
+            transition: all 0.3s ease;
         }
-        .active-dot, .dot:hover {
+        .dot:hover {
             background-color: #C9A03D;
+            transform: scale(1.2);
         }
-        /* Animasi fade */
+        .active-dot {
+            background-color: #C9A03D;
+            width: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 8px rgba(201,160,61,0.6);
+        }
         .fade {
             animation-name: fade;
             animation-duration: 1s;
         }
         @keyframes fade {
-            from {opacity: 0.4}
-            to {opacity: 1}
+            from {opacity: 0.4; transform: scale(0.98);}
+            to {opacity: 1; transform: scale(1);}
         }
 
         /* Container */
@@ -361,16 +496,28 @@
             font-size: 0.7rem;
             letter-spacing: 2px;
             margin-bottom: 8px;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            background: rgba(201,160,61,0.1);
         }
         .section-head h3 {
             font-size: 1.5rem;
             font-weight: 700;
+            position: relative;
+            display: inline-block;
         }
         .section-head .line {
-            width: 50px;
-            height: 2px;
-            background: #C9A03D;
-            margin: 10px auto 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #C9A03D, #a07d2c);
+            margin: 12px auto 0;
+            border-radius: 3px;
+            animation: lineExpand 1s ease-out;
+        }
+        @keyframes lineExpand {
+            from { width: 0; }
+            to { width: 60px; }
         }
 
         /* Filter Tabs */
@@ -390,43 +537,78 @@
             font-weight: 500;
             color: #E8EDF2;
             cursor: pointer;
-            transition: all 0.25s;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(4px);
         }
         .tab-btn i {
             margin-right: 4px;
             font-size: 0.65rem;
         }
-        .tab-btn:hover, .tab-btn.active {
+        .tab-btn:hover {
+            background: rgba(201, 160, 61, 0.2);
+            border-color: #C9A03D;
+            transform: translateY(-2px);
+        }
+        .tab-btn.active {
             background: #C9A03D;
             color: #0B0E14;
             border-color: #C9A03D;
+            box-shadow: 0 4px 12px rgba(201,160,61,0.3);
         }
 
-        /* Featured Grid */
-        .featured-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-        .featured-card {
+        /* ========== GRADIENT BORDER ANIMATION ON CARDS ========== */
+        .featured-card, .news-card, .info-item {
+            position: relative;
             background: rgba(18, 22, 32, 0.8);
             backdrop-filter: blur(5px);
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
-            border: 1px solid rgba(201, 160, 61, 0.15);
-            transition: all 0.3s ease;
             cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
-        .featured-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(201, 160, 61, 0.5);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        /* Gradient Border Animation */
+        .featured-card::after, .news-card::after, .info-item::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, 
+                transparent 0%, 
+                #C9A03D 20%, 
+                #ffd700 40%, 
+                #C9A03D 60%, 
+                transparent 80%,
+                transparent 100%);
+            background-size: 200% 200%;
+            border-radius: 22px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            animation: gradientShift 3s ease infinite;
         }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .featured-card:hover::after, .news-card:hover::after, .info-item:hover::after {
+            opacity: 1;
+        }
+        .featured-card:hover, .news-card:hover, .info-item:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 35px rgba(0,0,0,0.4);
+        }
+
         .featured-img {
             width: 100%;
             height: 200px;
             object-fit: cover;
+            transition: transform 0.5s;
+        }
+        .featured-card:hover .featured-img {
+            transform: scale(1.03);
         }
         .featured-info {
             padding: 15px;
@@ -461,21 +643,24 @@
         .news-card {
             background: rgba(18, 22, 32, 0.6);
             backdrop-filter: blur(4px);
-            border-radius: 16px;
+            border-radius: 18px;
             overflow: hidden;
             border: 1px solid rgba(255,255,255,0.05);
-            transition: 0.25s;
+            transition: 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             cursor: pointer;
         }
         .news-card:hover {
-            transform: translateY(-3px);
-            border-color: rgba(201, 160, 61, 0.3);
+            transform: translateY(-4px);
             background: rgba(18, 22, 32, 0.9);
         }
         .news-img {
             width: 100%;
             height: 160px;
             object-fit: cover;
+            transition: transform 0.4s;
+        }
+        .news-card:hover .news-img {
+            transform: scale(1.03);
         }
         .news-content {
             padding: 14px;
@@ -513,15 +698,25 @@
         }
         .info-item {
             background: rgba(18, 22, 32, 0.5);
-            border-radius: 14px;
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
             padding: 15px;
             text-align: center;
             border: 1px solid rgba(201, 160, 61, 0.1);
+            transition: all 0.3s;
+        }
+        .info-item:hover {
+            transform: translateY(-5px);
+            background: rgba(18, 22, 32, 0.7);
         }
         .info-icon {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             color: #C9A03D;
             margin-bottom: 8px;
+            transition: transform 0.3s;
+        }
+        .info-item:hover .info-icon {
+            transform: scale(1.1);
         }
         .info-item h4 {
             font-size: 0.85rem;
@@ -531,6 +726,39 @@
         .info-item p {
             font-size: 0.65rem;
             color: #8E9AAF;
+        }
+
+        /* ========== SMOOTH REVEAL ON SCROLL (AOS) ========== */
+        [data-aos] {
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        [data-aos].aos-animate {
+            opacity: 1;
+        }
+        [data-aos="fade-up"] {
+            transform: translateY(30px);
+        }
+        [data-aos="fade-up"].aos-animate {
+            transform: translateY(0);
+        }
+        [data-aos="fade-left"] {
+            transform: translateX(-30px);
+        }
+        [data-aos="fade-left"].aos-animate {
+            transform: translateX(0);
+        }
+        [data-aos="fade-right"] {
+            transform: translateX(30px);
+        }
+        [data-aos="fade-right"].aos-animate {
+            transform: translateX(0);
+        }
+        [data-aos="zoom-in"] {
+            transform: scale(0.95);
+        }
+        [data-aos="zoom-in"].aos-animate {
+            transform: scale(1);
         }
 
         /* Modal */
@@ -545,15 +773,26 @@
             backdrop-filter: blur(12px);
             z-index: 2000;
             overflow-y: auto;
+            animation: modalFadeIn 0.3s ease;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; backdrop-filter: blur(0); }
+            to { opacity: 1; backdrop-filter: blur(12px); }
         }
         .modal-container {
             max-width: 90%;
             margin: 30px auto;
-            background: #11161F;
-            border-radius: 20px;
-            padding: 20px;
+            background: linear-gradient(145deg, #11161F, #0d111a);
+            border-radius: 24px;
+            padding: 25px;
             position: relative;
             border: 1px solid rgba(201, 160, 61, 0.3);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            animation: modalSlideIn 0.4s ease;
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         .close-modal {
             position: absolute;
@@ -563,15 +802,24 @@
             cursor: pointer;
             color: #8E9AAF;
             transition: 0.2s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
         }
         .close-modal:hover {
             color: #C9A03D;
+            background: rgba(201,160,61,0.2);
+            transform: rotate(90deg);
         }
         .modal-img {
             width: 100%;
-            max-height: 250px;
+            max-height: 300px;
             object-fit: cover;
-            border-radius: 16px;
+            border-radius: 20px;
             margin-bottom: 15px;
         }
         .modal-title {
@@ -602,9 +850,9 @@
 
         /* Footer */
         .footer {
-            background: #080B10;
+            background: linear-gradient(180deg, #080B10, #05070a);
             border-top: 1px solid rgba(201, 160, 61, 0.15);
-            padding: 30px 20px;
+            padding: 35px 20px;
             text-align: center;
             margin-top: 40px;
         }
@@ -625,28 +873,29 @@
         /* Sticky Social Media Share */
         .sticky-share {
             position: fixed;
-            left: 10px;
+            left: 12px;
             top: 50%;
             transform: translateY(-50%);
             z-index: 9998;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
         .share-btn {
-            width: 35px;
-            height: 35px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
             text-decoration: none;
             color: white;
+            backdrop-filter: blur(4px);
         }
-        .share-btn:hover { transform: scale(1.05); }
+        .share-btn:hover { transform: scale(1.1) translateX(3px); }
         .share-btn-wa { background: #25D366; }
         .share-btn-fb { background: #1877F2; }
         .share-btn-twitter { background: #1DA1F2; }
@@ -656,8 +905,8 @@
         /* Floating Button */
         .floating-btn-container {
             position: fixed;
-            bottom: 15px;
-            right: 15px;
+            bottom: 20px;
+            right: 20px;
             z-index: 9999;
         }
         .main-contact-btn {
@@ -668,31 +917,32 @@
             background: linear-gradient(135deg, #C9A03D, #a07d2c);
             border: none;
             border-radius: 50px;
-            padding: 8px 16px;
+            padding: 10px 18px;
             color: #0B0E14;
             font-weight: 700;
             font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .main-contact-btn i {
-            font-size: 0.9rem;
-            color: #0B0E14;
+        .main-contact-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(201,160,61,0.4);
         }
         .contact-popup {
             position: absolute;
             bottom: 55px;
             right: 0;
             background: #1a1f2a;
-            border-radius: 14px;
+            border-radius: 16px;
             overflow: hidden;
-            width: 190px;
+            width: 210px;
             opacity: 0;
             visibility: hidden;
             transform: translateY(10px);
             transition: all 0.3s ease;
             border: 1px solid rgba(201, 160, 61, 0.3);
+            backdrop-filter: blur(10px);
         }
         .contact-popup.show {
             opacity: 1;
@@ -715,8 +965,9 @@
         .contact-item:hover {
             background: rgba(201, 160, 61, 0.15);
             padding-left: 18px;
+            color: #C9A03D;
         }
-        .contact-item i { width: 20px; font-size: 0.85rem; }
+        .contact-item i { width: 22px; font-size: 0.85rem; }
         .submenu { padding-left: 30px; background: rgba(0,0,0,0.2); }
         .submenu .contact-item { font-size: 0.65rem; padding: 6px 12px; }
         .divider { height: 1px; background: linear-gradient(90deg, transparent, #C9A03D, transparent); margin: 4px 0; }
@@ -747,7 +998,7 @@
             .slide-caption p { font-size: 0.85rem; }
         }
 
-        /* MOBILE KECIL (di bawah 480px) */
+        /* MOBILE KECIL */
         @media (max-width: 480px) {
             .sticky-share { display: none; }
             .hero h2 { font-size: 1.5rem; }
@@ -762,7 +1013,7 @@
             .slide-caption { padding: 8px; }
             .slide-caption h3 { font-size: 0.7rem; }
             .slide-caption p { font-size: 0.55rem; }
-            .prev, .next { padding: 6px; font-size: 10px; margin-top: -15px; }
+            .prev, .next { padding: 8px 12px; font-size: 12px; margin-top: -18px; }
         }
     </style>
 </head>
@@ -792,9 +1043,9 @@
 <!-- Hero -->
 <section class="hero">
     <div class="hero-bg-pattern"></div>
-    <div class="hero-content">
+    <div class="hero-content" data-aos="fade-up">
         <div class="hero-badge"><i class="fas fa-trophy"></i> FIFA WORLD CUP 2026</div>
-        <h2>PIALA DUNIA <span>2026</span><br>USA • MEXICO • CANADA</h2>
+        <h2 data-text="PIALA DUNIA 2026">PIALA DUNIA <span>2026</span><br>USA • MEXICO • CANADA</h2>
         <div class="hosts">
             <span class="host"><i class="fas fa-flag-usa"></i> United States</span>
             <span class="host"><i class="fas fa-flag-mexico"></i> Mexico</span>
@@ -810,52 +1061,51 @@
     </div>
 </section>
 
-<!-- ============ SLIDESHOW 3 FOTO (UKURAN SUDAH DIPERBAIKI UNTUK MOBILE) ============ -->
-<div class="slideshow-container">
-    <div class="slide fade">
-        <img src="https://the.splg.site/images/2026/04/09/bg2.jpeg" alt="World Cup 2026 Stadium">
-        <div class="slide-caption">
-            <h3>🏟️ 16 Stadion Megah</h3>
-            <p>MetLife Stadium, SoFi Stadium, AT&T Stadium siap menyambut Piala Dunia 2026</p>
+<!-- Slideshow -->
+<div class="slideshow-wrapper">
+    <div class="slideshow-container" data-aos="zoom-in">
+        <div class="slide fade">
+            <img src="https://the.splg.site/images/2026/04/10/bgge19f2cdfc5df37f3.jpeg" alt="World Cup 2026 Stadium">
+            <div class="slide-caption">
+                <h3>🏟️ 16 Stadion Megah</h3>
+                <p>MetLife Stadium, SoFi Stadium, AT&T Stadium siap menyambut Piala Dunia 2026</p>
+            </div>
         </div>
-    </div>
-    <div class="slide fade">
-        <img src="https://the.splg.site/images/2026/04/09/bg3.jpeg" alt="World Cup Trophy">
-        <div class="slide-caption">
-            <h3>🏆 Trofi Piala Dunia</h3>
-            <p>48 tim terbaik dunia berlomba meraih trofi bergengsi di Amerika Serikat, Meksiko, dan Kanada</p>
+        <div class="slide fade">
+            <img src="https://the.splg.site/images/2026/04/10/bg3ed141bddfa8ffb4b.jpeg" alt="World Cup Trophy">
+            <div class="slide-caption">
+                <h3>🏆 Trofi Piala Dunia</h3>
+                <p>48 tim terbaik dunia berlomba meraih trofi bergengsi di Amerika Serikat, Meksiko, dan Kanada</p>
+            </div>
         </div>
-    </div>
-    <div class="slide fade">
-        <img src="https://the.splg.site/images/2026/04/09/WORLD-CUP-2026.jpeg" alt="World Cup Fans">
-        <div class="slide-caption">
-            <h3>🌍 Suporter Seluruh Dunia</h3>
-            <p>Miliaran pasang mata akan menyaksikan pesta sepakbola terbesar di dunia tahun 2026</p>
+        <div class="slide fade">
+            <img src="https://the.splg.site/images/2026/04/10/bg1.jpeg" alt="World Cup Fans">
+            <div class="slide-caption">
+                <h3>🌍 Suporter Seluruh Dunia</h3>
+                <p>Miliaran pasang mata akan menyaksikan pesta sepakbola terbesar di dunia tahun 2026</p>
+            </div>
         </div>
+        <a class="prev" onclick="changeSlide(-1)">&#10094;</a>
+        <a class="next" onclick="changeSlide(1)">&#10095;</a>
     </div>
-
-    <!-- Tombol navigasi -->
-    <a class="prev" onclick="changeSlide(-1)">&#10094;</a>
-    <a class="next" onclick="changeSlide(1)">&#10095;</a>
-</div>
-
-<div class="dots-container">
-    <span class="dot" onclick="currentSlide(1)"></span>
-    <span class="dot" onclick="currentSlide(2)"></span>
-    <span class="dot" onclick="currentSlide(3)"></span>
+    <div class="dots-container">
+        <span class="dot" onclick="currentSlide(1)"></span>
+        <span class="dot" onclick="currentSlide(2)"></span>
+        <span class="dot" onclick="currentSlide(3)"></span>
+    </div>
 </div>
 
 <div class="container">
     <!-- Info Cards -->
     <div class="info-strip">
-        <div class="info-item"><div class="info-icon"><i class="fas fa-city"></i></div><h4>16 Stadion</h4><p>Venue megah di 3 negara</p></div>
-        <div class="info-item"><div class="info-icon"><i class="fas fa-globe-americas"></i></div><h4>48 Tim Peserta</h4><p>Format ekspansi pertama</p></div>
-        <div class="info-item"><div class="info-icon"><i class="fas fa-futbol"></i></div><h4>104 Pertandingan</h4><p>Babak grup hingga final</p></div>
-        <div class="info-item"><div class="info-icon"><i class="fas fa-star-of-life"></i></div><h4>Bintang Dunia</h4><p>Aksi para superstar</p></div>
+        <div class="info-item" data-aos="fade-up" data-aos-delay="0"><div class="info-icon"><i class="fas fa-city"></i></div><h4>16 Stadion</h4><p>Venue megah di 3 negara</p></div>
+        <div class="info-item" data-aos="fade-up" data-aos-delay="100"><div class="info-icon"><i class="fas fa-globe-americas"></i></div><h4>48 Tim Peserta</h4><p>Format ekspansi pertama</p></div>
+        <div class="info-item" data-aos="fade-up" data-aos-delay="200"><div class="info-icon"><i class="fas fa-futbol"></i></div><h4>104 Pertandingan</h4><p>Babak grup hingga final</p></div>
+        <div class="info-item" data-aos="fade-up" data-aos-delay="300"><div class="info-icon"><i class="fas fa-star-of-life"></i></div><h4>Bintang Dunia</h4><p>Aksi para superstar</p></div>
     </div>
 
     <!-- Filter Tabs -->
-    <div class="filter-tabs" id="filterTabs">
+    <div class="filter-tabs" data-aos="fade-up">
         <button class="tab-btn active" data-cat="all"><i class="fas fa-globe"></i> Semua</button>
         <button class="tab-btn" data-cat="Piala Dunia 2026"><i class="fas fa-trophy"></i> Utama</button>
         <button class="tab-btn" data-cat="Jadwal Piala Dunia"><i class="fas fa-calendar-alt"></i> Jadwal</button>
@@ -869,7 +1119,7 @@
     <div class="featured-grid" id="featuredNews"></div>
 
     <!-- Section Berita -->
-    <div class="section-head" id="berita">
+    <div class="section-head" id="berita" data-aos="fade-up">
         <div class="sub"><i class="fas fa-newspaper"></i> TERKINI & TERPERCAYA</div>
         <h3>BERITA PIALA DUNIA</h3>
         <div class="line"></div>
@@ -894,26 +1144,17 @@
 
 <!-- Sticky Social Media Share -->
 <div class="sticky-share">
-    <a href="#" class="share-btn share-btn-wa" data-tooltip="Share via WhatsApp" onclick="shareWA(); return false;">
-        <i class="fab fa-whatsapp"></i>
-    </a>
-    <a href="#" class="share-btn share-btn-fb" data-tooltip="Share via Facebook" onclick="shareFB(); return false;">
-        <i class="fab fa-facebook-f"></i>
-    </a>
-    <a href="#" class="share-btn share-btn-twitter" data-tooltip="Share via Twitter" onclick="shareTwitter(); return false;">
-        <i class="fab fa-twitter"></i>
-    </a>
-    <a href="#" class="share-btn share-btn-telegram" data-tooltip="Share via Telegram" onclick="shareTelegram(); return false;">
-        <i class="fab fa-telegram-plane"></i>
-    </a>
+    <a href="#" class="share-btn share-btn-wa" onclick="shareWA(); return false;"><i class="fab fa-whatsapp"></i></a>
+    <a href="#" class="share-btn share-btn-fb" onclick="shareFB(); return false;"><i class="fab fa-facebook-f"></i></a>
+    <a href="#" class="share-btn share-btn-twitter" onclick="shareTwitter(); return false;"><i class="fab fa-twitter"></i></a>
+    <a href="#" class="share-btn share-btn-telegram" onclick="shareTelegram(); return false;"><i class="fab fa-telegram-plane"></i></a>
 </div>
 
-<!-- Floating Button dengan Popup Menu -->
+<!-- Floating Button -->
 <div class="floating-btn-container">
     <div class="contact-popup" id="contactPopup">
         <div class="contact-item" onclick="toggleSubmenu('hubungiSubmenu')">
-            <i class="fas fa-headset"></i>
-            <span>📞 HUBUNG KAMI</span>
+            <i class="fas fa-headset"></i><span>📞 HUBUNG KAMI</span>
             <i class="fas fa-chevron-down" style="margin-left: auto; font-size: 0.6rem;"></i>
         </div>
         <div id="hubungiSubmenu" class="submenu" style="display: none;">
@@ -925,8 +1166,7 @@
         <a href="https://shortku.link/waABAD4D" target="_blank" class="contact-item"><i class="fab fa-whatsapp"></i><span>💚 WA OFFICIAL</span></a>
         <div class="divider"></div>
         <div class="contact-item" onclick="toggleSubmenu('livechatSubmenu')">
-            <i class="fas fa-comments"></i>
-            <span>💬 LIVE CHAT</span>
+            <i class="fas fa-comments"></i><span>💬 LIVE CHAT</span>
             <i class="fas fa-chevron-down" style="margin-left: auto; font-size: 0.6rem;"></i>
         </div>
         <div id="livechatSubmenu" class="submenu" style="display: none;">
@@ -947,7 +1187,16 @@
     <div class="footer-copyright" style="margin-top: 6px;">FIFA World Cup 2026™</div>
 </footer>
 
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
+    // Initialize AOS (Smooth Reveal on Scroll)
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 100,
+        easing: 'ease-out-cubic'
+    });
+
     // ======================== COUNTDOWN ========================
     function updateCountdown() {
         const target = new Date(2026, 5, 12, 15, 0, 0);
@@ -1022,7 +1271,7 @@
     showSlide(slideIndex);
     startAutoSlide();
 
-    // ======================== POPUP MENU TOGGLE ========================
+    // ======================== POPUP MENU ========================
     const contactBtn = document.getElementById('contactBtn');
     const contactPopup = document.getElementById('contactPopup');
 
@@ -1058,28 +1307,23 @@
     function getCurrentPageUrl() {
         return encodeURIComponent(window.location.href);
     }
-
     function getCurrentPageTitle() {
         return encodeURIComponent(document.title);
     }
-
     function shareWA() {
         const url = getCurrentPageUrl();
         const text = getCurrentPageTitle();
         window.open(`https://wa.me/?text=${text}%20-%20${url}`, '_blank');
     }
-
     function shareFB() {
         const url = getCurrentPageUrl();
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400');
     }
-
     function shareTwitter() {
         const url = getCurrentPageUrl();
         const text = getCurrentPageTitle();
         window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'width=600,height=400');
     }
-
     function shareTelegram() {
         const url = getCurrentPageUrl();
         const text = getCurrentPageTitle();
@@ -1124,8 +1368,8 @@
         if(!container) return;
         const featured = allNews.slice(0,2);
         if(featured.length === 0) { container.innerHTML = ''; return; }
-        container.innerHTML = featured.map(n => `
-            <div class="featured-card" onclick="showDetail(${n.id})">
+        container.innerHTML = featured.map((n, idx) => `
+            <div class="featured-card" onclick="showDetail(${n.id})" data-aos="fade-up" data-aos-delay="${idx * 100}">
                 <img class="featured-img" src="/uploads/${n.image}" onerror="this.src='/uploads/default-worldcup.jpg'" alt="${n.title}">
                 <div class="featured-info">
                     <span class="featured-cat"><i class="fas fa-trophy"></i> ${n.category}</span>
@@ -1143,8 +1387,8 @@
             container.innerHTML = '<div style="text-align:center; padding:40px; color:#8E9AAF;">Belum ada berita untuk kategori ini. Update berikutnya segera hadir.</div>';
             return;
         }
-        container.innerHTML = filtered.map(n => `
-            <div class="news-card" onclick="showDetail(${n.id})">
+        container.innerHTML = filtered.map((n, idx) => `
+            <div class="news-card" onclick="showDetail(${n.id})" data-aos="fade-up" data-aos-delay="${idx * 50}">
                 <img class="news-img" src="/uploads/${n.image}" onerror="this.src='/uploads/default-worldcup.jpg'" alt="${n.title}">
                 <div class="news-content">
                     <div class="news-cat"><i class="fas fa-tag"></i> ${n.category}</div>
@@ -1154,6 +1398,8 @@
                 </div>
             </div>
         `).join('');
+        // Re-initialize AOS untuk elemen baru
+        AOS.refresh();
     }
 
     window.showDetail = async function(id) {
