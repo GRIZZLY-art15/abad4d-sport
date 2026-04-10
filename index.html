@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* SEMUA STYLE SAMA SEPERTI YANG ANDA PUNYA */
         * {
             margin: 0;
             padding: 0;
@@ -21,7 +20,6 @@
             overflow-x: hidden;
         }
 
-        /* Login Container */
         .login-container {
             min-height: 100vh;
             display: flex;
@@ -118,13 +116,11 @@
             color: #2ecc71;
         }
 
-        /* Admin Main Container */
         .admin-container {
             display: none;
             min-height: 100vh;
         }
 
-        /* Sidebar */
         .sidebar {
             position: fixed;
             left: 0;
@@ -202,13 +198,11 @@
             color: #e74c3c;
         }
 
-        /* Main Content */
         .main-content {
             margin-left: 260px;
             padding: 20px 30px;
         }
 
-        /* Header */
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -259,17 +253,6 @@
             background: rgba(201, 160, 61, 0.15);
         }
 
-        .btn-danger {
-            background: rgba(231, 76, 60, 0.15);
-            border: 1px solid rgba(231, 76, 60, 0.3);
-            color: #e74c3c;
-        }
-
-        .btn-danger:hover {
-            background: rgba(231, 76, 60, 0.25);
-        }
-
-        /* Stats Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -300,7 +283,6 @@
             color: #8E9AAF;
         }
 
-        /* Table */
         .table-container {
             background: rgba(18, 22, 32, 0.6);
             border-radius: 16px;
@@ -367,7 +349,6 @@
             background: rgba(231, 76, 60, 0.2);
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -673,7 +654,6 @@
     let token = null;
     let currentPage = 'dashboard';
 
-    // Cek token saat halaman dimuat
     async function checkToken() {
         const savedToken = localStorage.getItem('adminToken');
         if (!savedToken) {
@@ -707,7 +687,6 @@
         }
     }
 
-    // Login
     async function login() {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
@@ -1016,14 +995,12 @@
         if (event.target === modal) closeModal();
     }
 
-    // Load saved settings
     const savedStatus = localStorage.getItem('botStatus');
     if (savedStatus) document.getElementById('botStatus').value = savedStatus;
     
     const savedInterval = localStorage.getItem('updateInterval');
     if (savedInterval) document.getElementById('updateInterval').value = savedInterval;
 
-    // Jalankan pengecekan token saat halaman dimuat
     checkToken();
 </script>
 </body>
