@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* SEMUA STYLE SAMA SEPERTI YANG ANDA PUNYA */
         * {
             margin: 0;
             padding: 0;
@@ -21,7 +20,6 @@
             overflow-x: hidden;
         }
 
-        /* Login Container */
         .login-container {
             min-height: 100vh;
             display: flex;
@@ -108,13 +106,21 @@
             color: #e74c3c;
         }
 
-        /* Admin Main Container */
+        .success-msg {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #2ecc71;
+        }
+
         .admin-container {
             display: none;
             min-height: 100vh;
         }
 
-        /* Sidebar */
         .sidebar {
             position: fixed;
             left: 0;
@@ -192,13 +198,11 @@
             color: #e74c3c;
         }
 
-        /* Main Content */
         .main-content {
             margin-left: 260px;
             padding: 20px 30px;
         }
 
-        /* Header */
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -249,17 +253,6 @@
             background: rgba(201, 160, 61, 0.15);
         }
 
-        .btn-danger {
-            background: rgba(231, 76, 60, 0.15);
-            border: 1px solid rgba(231, 76, 60, 0.3);
-            color: #e74c3c;
-        }
-
-        .btn-danger:hover {
-            background: rgba(231, 76, 60, 0.25);
-        }
-
-        /* Stats Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -290,7 +283,6 @@
             color: #8E9AAF;
         }
 
-        /* Table */
         .table-container {
             background: rgba(18, 22, 32, 0.6);
             border-radius: 16px;
@@ -357,7 +349,6 @@
             background: rgba(231, 76, 60, 0.2);
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -483,6 +474,7 @@
             <li><a href="#" onclick="showPage('news')"><i class="fas fa-newspaper"></i> <span>Berita</span></a></li>
             <li><a href="#" onclick="showPage('categories')"><i class="fas fa-tags"></i> <span>Kategori</span></a></li>
             <li><a href="#" onclick="showPage('settings')"><i class="fas fa-cog"></i> <span>Pengaturan</span></a></li>
+            <li><a href="#" onclick="showPage('changePassword')"><i class="fas fa-key"></i> <span>Ganti Password</span></a></li>
             <li><a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
         </ul>
     </div>
@@ -586,6 +578,29 @@
                 <div id="updateStatus" style="margin-top: 15px; color: #C9A03D;"></div>
             </div>
         </div>
+
+        <!-- Change Password Page -->
+        <div id="changePasswordPage" style="display: none;">
+            <div class="table-container" style="padding: 20px;">
+                <h3 style="margin-bottom: 20px;">Ganti Password Admin</h3>
+                <div id="passwordError" class="error-msg" style="display: none; margin-bottom: 15px;"></div>
+                <div id="passwordSuccess" class="success-msg" style="display: none; margin-bottom: 15px;"></div>
+                
+                <div class="form-group">
+                    <label>Password Lama</label>
+                    <input type="password" id="oldPassword" class="login-input" placeholder="Masukkan password lama">
+                </div>
+                <div class="form-group">
+                    <label>Password Baru</label>
+                    <input type="password" id="newPassword" class="login-input" placeholder="Masukkan password baru (minimal 6 karakter)">
+                </div>
+                <div class="form-group">
+                    <label>Konfirmasi Password Baru</label>
+                    <input type="password" id="confirmPassword" class="login-input" placeholder="Konfirmasi password baru">
+                </div>
+                <button class="btn-primary" onclick="changePassword()">Ganti Password</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -639,7 +654,6 @@
     let token = null;
     let currentPage = 'dashboard';
 
-    // Cek token saat halaman dimuat
     async function checkToken() {
         const savedToken = localStorage.getItem('adminToken');
         if (!savedToken) {
@@ -673,7 +687,6 @@
         }
     }
 
-    // Login
     async function login() {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
@@ -724,6 +737,7 @@
         document.getElementById('newsPage').style.display = page === 'news' ? 'block' : 'none';
         document.getElementById('categoriesPage').style.display = page === 'categories' ? 'block' : 'none';
         document.getElementById('settingsPage').style.display = page === 'settings' ? 'block' : 'none';
+        document.getElementById('changePasswordPage').style.display = page === 'changePassword' ? 'block' : 'none';
         
         const actionBtn = document.getElementById('actionBtn');
         actionBtn.style.display = page === 'news' ? 'inline-flex' : 'none';
@@ -732,7 +746,8 @@
             dashboard: { title: 'Dashboard', subtitle: 'Statistik & Berita Terbaru Piala Dunia 2026' },
             news: { title: 'Manajemen Berita', subtitle: 'Tambah, edit, atau hapus berita Piala Dunia' },
             categories: { title: 'Kategori Berita', subtitle: '7 Kategori Khusus Piala Dunia 2026' },
-            settings: { title: 'Pengaturan Bot', subtitle: 'Konfigurasi auto update berita' }
+            settings: { title: 'Pengaturan Bot', subtitle: 'Konfigurasi auto update berita' },
+            changePassword: { title: 'Ganti Password', subtitle: 'Ubah password admin Anda' }
         };
         
         document.getElementById('pageTitle').innerText = titles[page].title;
@@ -906,6 +921,66 @@
         alert(`Interval update diubah menjadi ${interval} menit. Restart server untuk menerapkan perubahan.`);
     }
 
+    async function changePassword() {
+        const oldPassword = document.getElementById('oldPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const errorDiv = document.getElementById('passwordError');
+        const successDiv = document.getElementById('passwordSuccess');
+        
+        errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+        
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            errorDiv.style.display = 'block';
+            errorDiv.innerText = 'Semua field harus diisi!';
+            return;
+        }
+        
+        if (newPassword.length < 6) {
+            errorDiv.style.display = 'block';
+            errorDiv.innerText = 'Password baru minimal 6 karakter!';
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            errorDiv.style.display = 'block';
+            errorDiv.innerText = 'Password baru dan konfirmasi tidak sama!';
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/admin/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    oldPassword: oldPassword, 
+                    newPassword: newPassword,
+                    secretKey: 'ABAD4D_SPORT_SUPER_SECRET_2026_XYZ123'
+                })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                successDiv.style.display = 'block';
+                successDiv.innerText = 'Password berhasil diubah! Silakan login kembali.';
+                document.getElementById('oldPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+                setTimeout(() => {
+                    logout();
+                }, 2000);
+            } else {
+                errorDiv.style.display = 'block';
+                errorDiv.innerText = data.message || 'Gagal mengubah password!';
+            }
+        } catch (error) {
+            errorDiv.style.display = 'block';
+            errorDiv.innerText = 'Gagal terhubung ke server!';
+        }
+    }
+
     function fetchNews() {
         if (currentPage === 'dashboard') loadDashboard();
         if (currentPage === 'news') loadAllNews();
@@ -920,14 +995,12 @@
         if (event.target === modal) closeModal();
     }
 
-    // Load saved settings
     const savedStatus = localStorage.getItem('botStatus');
     if (savedStatus) document.getElementById('botStatus').value = savedStatus;
     
     const savedInterval = localStorage.getItem('updateInterval');
     if (savedInterval) document.getElementById('updateInterval').value = savedInterval;
 
-    // Jalankan pengecekan token saat halaman dimuat
     checkToken();
 </script>
 </body>
