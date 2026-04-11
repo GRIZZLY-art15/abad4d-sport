@@ -19,18 +19,17 @@
     <link rel="apple-touch-icon" sizes="180x180" href="https://the.splg.site/images/2026/04/09/fw.png">
     <link rel="shortcut icon" type="image/png" href="https://the.splg.site/images/2026/04/09/fw.png">
     
-    <!-- FONT (dioptimasi) -->
+    <!-- FONT -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- FONT AWESOME dengan preload -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
     
-    <!-- AOS Animation (ringan) -->
+    <!-- AOS Animation -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
     <style>
-        /* ========== RESET ========== */
         * {
             margin: 0;
             padding: 0;
@@ -120,6 +119,69 @@
             border-radius: 30px;
             font-size: 0.6rem;
             color: #C9A03D;
+        }
+
+        /* Search Bar Container */
+        .search-container {
+            max-width: 1300px;
+            margin: 20px auto 0;
+            padding: 0 16px;
+        }
+        .search-box {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8E9AAF;
+            font-size: 0.8rem;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            background: rgba(18, 22, 32, 0.8);
+            border: 1px solid rgba(201, 160, 61, 0.3);
+            border-radius: 50px;
+            color: white;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #C9A03D;
+            background: rgba(18, 22, 32, 1);
+        }
+        .search-box input::placeholder {
+            color: #6F7C91;
+        }
+        .search-info {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.7rem;
+            color: #8E9AAF;
+        }
+        .search-info span {
+            color: #C9A03D;
+            font-weight: 600;
+        }
+        .clear-search {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #8E9AAF;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+        .clear-search:hover {
+            color: #ef4444;
         }
 
         /* Hero Section */
@@ -259,8 +321,15 @@
         .fade { animation-name: fade; animation-duration: 0.8s; }
         @keyframes fade { from {opacity: 0.4;} to {opacity: 1;} }
 
-        /* Container */
-        .container { max-width: 1300px; margin: 0 auto; padding: 30px 16px; }
+        /* Container - diubah menjadi grid 2 kolom untuk sidebar */
+        .container { 
+            max-width: 1300px; 
+            margin: 0 auto; 
+            padding: 30px 16px;
+            display: grid;
+            grid-template-columns: 2.5fr 1.2fr;
+            gap: 30px;
+        }
 
         /* Section Head */
         .section-head { text-align: center; margin-bottom: 25px; }
@@ -381,6 +450,106 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 15px;
+        }
+
+        /* ========== PAGINATION STYLES ========== */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 35px;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            background: rgba(18, 22, 32, 0.7);
+            border: 1px solid rgba(201, 160, 61, 0.2);
+            padding: 8px 14px;
+            border-radius: 30px;
+            color: #E8EDF2;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 38px;
+        }
+        .page-btn:hover {
+            background: rgba(201, 160, 61, 0.2);
+            border-color: #C9A03D;
+            transform: translateY(-2px);
+        }
+        .page-btn.active {
+            background: #C9A03D;
+            color: #0B0E14;
+            border-color: #C9A03D;
+        }
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .page-dots {
+            color: #8E9AAF;
+            padding: 0 5px;
+        }
+
+        /* ========== SIDEBAR & KLASEMEN STYLES ========== */
+        .sidebar {
+            position: sticky;
+            top: 90px;
+            height: fit-content;
+        }
+
+        .standings-widget {
+            background: rgba(18, 22, 32, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(201, 160, 61, 0.2);
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(201, 160, 61, 0.2);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .widget-header h4 {
+            color: #C9A03D;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .league-select {
+            background: #0f172a;
+            border: 1px solid rgba(201, 160, 61, 0.2);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 30px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .league-select:hover, .league-select:focus {
+            border-color: #C9A03D;
+            outline: none;
+        }
+
+        .standings-iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            border-radius: 12px;
+            background: #0f172a;
         }
 
         /* Modal */
@@ -557,14 +726,31 @@
             .hero h2 { font-size: 2.8rem; }
             .news-grid { grid-template-columns: repeat(3, 1fr); }
         }
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr !important;
+            }
+            .sidebar {
+                position: static;
+                margin-top: 30px;
+            }
+            .standings-iframe {
+                height: 450px;
+            }
+        }
+        @media (max-width: 768px) {
+            .standings-iframe {
+                height: 400px;
+            }
+        }
         @media (max-width: 480px) {
             .sticky-share { display: none; }
             .hero h2 { font-size: 1.4rem; }
             .countdown-number { font-size: 1rem; }
             .prev, .next { padding: 5px 8px; font-size: 10px; }
+            .pagination { gap: 5px; }
+            .page-btn { padding: 5px 10px; font-size: 0.6rem; min-width: 32px; }
         }
-
-        /* Matikan animasi untuk yang tidak suka */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -615,20 +801,30 @@
     </div>
 </section>
 
+<!-- SEARCH BAR -->
+<div class="search-container">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Cari berita, tim, pemain...">
+        <button class="clear-search" id="clearSearchBtn" style="display: none;" onclick="clearSearch()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="search-info" id="searchInfo"></div>
+</div>
+
 <!-- Slideshow -->
 <div class="slideshow-wrapper">
     <div class="slideshow-container" data-aos="zoom-in">
         <div class="slide fade">
             <img loading="lazy" src="https://the.splg.site/images/2026/04/10/bgge19f2cdfc5df37f3.jpeg" alt="World Cup 2026 Stadium">
-            <div class="slide-caption"><h3>🏟️ 16 Stadion Megah</h3><p>MetLife, SoFi, AT&T Stadium siap menyambut Piala Dunia</p></div>
+            <div class="slide-caption"><h3>.</h3><p>.</p></div>
         </div>
         <div class="slide fade">
             <img loading="lazy" src="https://the.splg.site/images/2026/04/10/bg3ed141bddfa8ffb4b.jpeg" alt="World Cup Trophy">
-            <div class="slide-caption"><h3>🏆 Trofi Piala Dunia</h3><p>48 tim terbaik dunia berlomba meraih trofi bergengsi</p></div>
+            <div class="slide-caption"><h3>.</h3><p>.</p></div>
         </div>
         <div class="slide fade">
             <img loading="lazy" src="https://the.splg.site/images/2026/04/10/bg1.jpeg" alt="World Cup Fans">
-            <div class="slide-caption"><h3>🌍 Suporter Seluruh Dunia</h3><p>Miliaran pasang mata akan menyaksikan pesta sepakbola</p></div>
+            <div class="slide-caption"><h3>.</h3><p>.</p></div>
         </div>
         <a class="prev" onclick="changeSlide(-1)">&#10094;</a>
         <a class="next" onclick="changeSlide(1)">&#10095;</a>
@@ -641,37 +837,67 @@
 </div>
 
 <div class="container">
-    <!-- Info Cards -->
-    <div class="info-strip">
-        <div class="info-item" data-aos="fade-up" data-aos-delay="0"><div class="info-icon"><i class="fas fa-city"></i></div><h4>16 Stadion</h4><p>Venue megah di 3 negara</p></div>
-        <div class="info-item" data-aos="fade-up" data-aos-delay="100"><div class="info-icon"><i class="fas fa-globe-americas"></i></div><h4>48 Tim Peserta</h4><p>Format ekspansi pertama</p></div>
-        <div class="info-item" data-aos="fade-up" data-aos-delay="200"><div class="info-icon"><i class="fas fa-futbol"></i></div><h4>104 Pertandingan</h4><p>Babak grup hingga final</p></div>
-        <div class="info-item" data-aos="fade-up" data-aos-delay="300"><div class="info-icon"><i class="fas fa-star-of-life"></i></div><h4>Bintang Dunia</h4><p>Aksi para superstar</p></div>
+    <!-- KIRI: Berita -->
+    <div>
+        <!-- Info Cards -->
+        <div class="info-strip">
+            <div class="info-item" data-aos="fade-up" data-aos-delay="0"><div class="info-icon"><i class="fas fa-city"></i></div><h4>16 Stadion</h4><p>Venue megah di 3 negara</p></div>
+            <div class="info-item" data-aos="fade-up" data-aos-delay="100"><div class="info-icon"><i class="fas fa-globe-americas"></i></div><h4>48 Tim Peserta</h4><p>Format ekspansi pertama</p></div>
+            <div class="info-item" data-aos="fade-up" data-aos-delay="200"><div class="info-icon"><i class="fas fa-futbol"></i></div><h4>104 Pertandingan</h4><p>Babak grup hingga final</p></div>
+            <div class="info-item" data-aos="fade-up" data-aos-delay="300"><div class="info-icon"><i class="fas fa-star-of-life"></i></div><h4>Bintang Dunia</h4><p>Aksi para superstar</p></div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs" data-aos="fade-up">
+            <button class="tab-btn active" data-cat="all"><i class="fas fa-globe"></i> Semua</button>
+            <button class="tab-btn" data-cat="Piala Dunia 2026"><i class="fas fa-trophy"></i> Utama</button>
+            <button class="tab-btn" data-cat="Jadwal Piala Dunia"><i class="fas fa-calendar-alt"></i> Jadwal</button>
+            <button class="tab-btn" data-cat="Grup Piala Dunia"><i class="fas fa-layer-group"></i> Grup</button>
+            <button class="tab-btn" data-cat="Bintang Piala Dunia"><i class="fas fa-star"></i> Bintang</button>
+            <button class="tab-btn" data-cat="Tim Lolos Piala Dunia"><i class="fas fa-check-circle"></i> Tim Lolos</button>
+            <button class="tab-btn" data-cat="Sejarah Piala Dunia"><i class="fas fa-landmark"></i> Sejarah</button>
+        </div>
+
+        <!-- Featured News -->
+        <div class="featured-grid" id="featuredNews"></div>
+
+        <!-- Section Berita -->
+        <div class="section-head" id="berita" data-aos="fade-up">
+            <div class="sub"><i class="fas fa-newspaper"></i> TERKINI & TERPERCAYA</div>
+            <h3>BREAKING NEWS</h3>
+            <div class="line"></div>
+        </div>
+
+        <div id="newsGrid" class="news-grid">
+            <div style="text-align:center; padding:30px;"><i class="fas fa-spinner fa-pulse"></i> Memuat berita...</div>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="pagination" id="pagination"></div>
     </div>
 
-    <!-- Filter Tabs -->
-    <div class="filter-tabs" data-aos="fade-up">
-        <button class="tab-btn active" data-cat="all"><i class="fas fa-globe"></i> Semua</button>
-        <button class="tab-btn" data-cat="Piala Dunia 2026"><i class="fas fa-trophy"></i> Utama</button>
-        <button class="tab-btn" data-cat="Jadwal Piala Dunia"><i class="fas fa-calendar-alt"></i> Jadwal</button>
-        <button class="tab-btn" data-cat="Grup Piala Dunia"><i class="fas fa-layer-group"></i> Grup</button>
-        <button class="tab-btn" data-cat="Bintang Piala Dunia"><i class="fas fa-star"></i> Bintang</button>
-        <button class="tab-btn" data-cat="Tim Lolos Piala Dunia"><i class="fas fa-check-circle"></i> Tim Lolos</button>
-        <button class="tab-btn" data-cat="Sejarah Piala Dunia"><i class="fas fa-landmark"></i> Sejarah</button>
-    </div>
-
-    <!-- Featured News -->
-    <div class="featured-grid" id="featuredNews"></div>
-
-    <!-- Section Berita -->
-    <div class="section-head" id="berita" data-aos="fade-up">
-        <div class="sub"><i class="fas fa-newspaper"></i> TERKINI & TERPERCAYA</div>
-        <h3>BERITA PIALA DUNIA</h3>
-        <div class="line"></div>
-    </div>
-
-    <div id="newsGrid" class="news-grid">
-        <div style="text-align:center; padding:30px;"><i class="fas fa-spinner fa-pulse"></i> Memuat berita...</div>
+    <!-- KANAN: Sidebar dengan Klasemen -->
+    <div class="sidebar">
+        <!-- KLASEMEN WIDGET -->
+        <div class="standings-widget">
+            <div class="widget-header">
+                <h4><i class="fas fa-trophy"></i> Klasemen Lengkap</h4>
+                <select id="leagueSelect" class="league-select">
+                    <option value="england-premier-league">Premier League</option>
+                    <option value="spain-la-liga">La Liga</option>
+                    <option value="italy-serie-a">Serie A</option>
+                    <option value="germany-bundesliga">Bundesliga</option>
+                    <option value="france-ligue-1">Ligue 1</option>
+                    <option value="uefa-champions-league">UEFA Champions League</option>
+                    <option value="uefa-europa-league">UEFA Europa League</option>
+                    <option value="uefa-conference-league">UEFA Conference League</option>
+                </select>
+            </div>
+            <iframe id="standingsIframe" class="standings-iframe" 
+                src="https://www.scorebat.com/embed/competition/england-premier-league/"
+                title="Klasemen Sepak Bola">
+            </iframe>
+        </div>
     </div>
 </div>
 
@@ -744,7 +970,6 @@
             disable: false
         });
     } else {
-        // Matikan AOS di mobile untuk performa
         document.querySelectorAll('[data-aos]').forEach(el => {
             el.removeAttribute('data-aos');
             el.style.opacity = '1';
@@ -799,6 +1024,34 @@
     showSlide(slideIndex);
     startAutoSlide();
 
+    // ========== UPDATE IFRAME KLASEMEN ==========
+    function updateStandingsIframe() {
+        const leagueSelect = document.getElementById('leagueSelect');
+        const iframe = document.getElementById('standingsIframe');
+        if (!leagueSelect || !iframe) return;
+        
+        const leagueUrls = {
+            'england-premier-league': 'https://www.scorebat.com/embed/competition/england-premier-league/',
+            'spain-la-liga': 'https://www.scorebat.com/embed/competition/spain-la-liga/',
+            'italy-serie-a': 'https://www.scorebat.com/embed/competition/italy-serie-a/',
+            'germany-bundesliga': 'https://www.scorebat.com/embed/competition/germany-bundesliga/',
+            'france-ligue-1': 'https://www.scorebat.com/embed/competition/france-ligue-1/',
+            'uefa-champions-league': 'https://www.scorebat.com/embed/league/uefa-champions-league/',
+            'uefa-europa-league': 'https://www.scorebat.com/embed/league/uefa-europa-league/',
+            'uefa-conference-league': 'https://www.scorebat.com/embed/league/uefa-conference-league/'
+        };
+        
+        if (leagueUrls[leagueSelect.value]) {
+            iframe.src = leagueUrls[leagueSelect.value];
+        }
+    }
+
+    // Event listener untuk dropdown league
+    const leagueSelect = document.getElementById('leagueSelect');
+    if (leagueSelect) {
+        leagueSelect.addEventListener('change', updateStandingsIframe);
+    }
+
     // ========== POPUP MENU ==========
     const contactBtn = document.getElementById('contactBtn');
     const contactPopup = document.getElementById('contactPopup');
@@ -827,6 +1080,12 @@
     // ========== GLOBAL ==========
     let currentCategory = 'all';
     let allNews = [];
+    
+    // Pagination variables
+    let currentPage = 1;
+    const newsPerPage = 9;
+    let currentFilteredNews = [];
+    let currentSearchQuery = '';
 
     function formatDate(dateStr) {
         const d = new Date(dateStr);
@@ -838,8 +1097,7 @@
             const resp = await fetch('/api/news');
             const data = await resp.json();
             allNews = data.filter(n => n.category !== 'Timnas Indonesia');
-            renderFeatured();
-            renderNewsGrid();
+            applyFiltersAndSearch();
             hideLoading();
         } catch(e) {
             document.getElementById('newsGrid').innerHTML = '<div style="text-align:center;padding:30px;">⚠️ Gagal memuat berita. Silakan refresh.</div>';
@@ -857,10 +1115,45 @@
         }
     }
 
+    // ========== SEARCH & FILTER FUNCTIONS ==========
+    function applyFiltersAndSearch() {
+        let filtered = [...allNews];
+        
+        if (currentCategory !== 'all') {
+            filtered = filtered.filter(n => n.category === currentCategory);
+        }
+        
+        if (currentSearchQuery.trim() !== '') {
+            const query = currentSearchQuery.toLowerCase();
+            filtered = filtered.filter(n => 
+                n.title.toLowerCase().includes(query) || 
+                n.content.toLowerCase().includes(query)
+            );
+        }
+        
+        currentFilteredNews = filtered;
+        currentPage = 1;
+        
+        const searchInfo = document.getElementById('searchInfo');
+        if (currentSearchQuery) {
+            searchInfo.innerHTML = `Menampilkan <span>${filtered.length}</span> hasil untuk "${currentSearchQuery}"`;
+        } else {
+            searchInfo.innerHTML = '';
+        }
+        
+        renderFeatured();
+        renderNewsGridWithPagination();
+        renderPagination();
+    }
+
     function renderFeatured() {
         const container = document.getElementById('featuredNews');
         if(!container) return;
-        const featured = allNews.slice(0,2);
+        let featuredSource = [...allNews];
+        if (currentCategory !== 'all') {
+            featuredSource = featuredSource.filter(n => n.category === currentCategory);
+        }
+        const featured = featuredSource.slice(0,2);
         if(featured.length === 0) { container.innerHTML = ''; return; }
         container.innerHTML = featured.map((n, idx) => `
             <div class="featured-card" onclick="showDetail(${n.id})" data-aos="fade-up" data-aos-delay="${idx * 100}">
@@ -874,15 +1167,19 @@
         `).join('');
     }
 
-    function renderNewsGrid() {
+    function renderNewsGridWithPagination() {
         const container = document.getElementById('newsGrid');
-        let filtered = currentCategory === 'all' ? allNews : allNews.filter(n => n.category === currentCategory);
-        if(filtered.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding:30px; color:#8E9AAF;">Belum ada berita untuk kategori ini.</div>';
+        const start = (currentPage - 1) * newsPerPage;
+        const end = start + newsPerPage;
+        const pageNews = currentFilteredNews.slice(start, end);
+        
+        if (pageNews.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:#8E9AAF;">Tidak ada berita yang ditemukan.</div>';
             return;
         }
-        container.innerHTML = filtered.map((n, idx) => `
-            <div class="news-card" onclick="showDetail(${n.id})" data-aos="fade-up" data-aos-delay="${idx * 50}">
+        
+        container.innerHTML = pageNews.map((n, idx) => `
+            <div class="news-card" onclick="showDetail(${n.id})" data-aos="fade-up" data-aos-delay="${(idx % 9) * 50}">
                 <img loading="lazy" class="news-img" src="/uploads/${n.image}" onerror="this.src='/uploads/default-worldcup.jpg'" alt="${n.title}">
                 <div class="news-content">
                     <div class="news-cat"><i class="fas fa-tag"></i> ${n.category}</div>
@@ -892,7 +1189,84 @@
                 </div>
             </div>
         `).join('');
+        
         if (window.innerWidth > 768 && typeof AOS !== 'undefined') AOS.refresh();
+    }
+
+    function renderPagination() {
+        const totalPages = Math.ceil(currentFilteredNews.length / newsPerPage);
+        const paginationDiv = document.getElementById('pagination');
+        
+        if (totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+            return;
+        }
+        
+        let paginationHtml = '';
+        
+        if (currentPage > 1) {
+            paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage - 1})"><i class="fas fa-chevron-left"></i> Sebelumnya</button>`;
+        }
+        
+        const maxVisible = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+        
+        if (endPage - startPage < maxVisible - 1) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+        
+        if (startPage > 1) {
+            paginationHtml += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+            if (startPage > 2) paginationHtml += `<span class="page-dots">...</span>`;
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `<button class="page-btn ${currentPage === i ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) paginationHtml += `<span class="page-dots">...</span>`;
+            paginationHtml += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+        }
+        
+        if (currentPage < totalPages) {
+            paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage + 1})">Selanjutnya <i class="fas fa-chevron-right"></i></button>`;
+        }
+        
+        paginationDiv.innerHTML = paginationHtml;
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        renderNewsGridWithPagination();
+        renderPagination();
+        window.scrollTo({ top: document.getElementById('newsGrid').offsetTop - 80, behavior: 'smooth' });
+    }
+
+    function setupSearch() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                currentSearchQuery = e.target.value;
+                const clearBtn = document.getElementById('clearSearchBtn');
+                if (clearBtn) {
+                    clearBtn.style.display = currentSearchQuery ? 'block' : 'none';
+                }
+                applyFiltersAndSearch();
+            });
+        }
+    }
+
+    function clearSearch() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = '';
+            currentSearchQuery = '';
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (clearBtn) clearBtn.style.display = 'none';
+            applyFiltersAndSearch();
+        }
     }
 
     window.showDetail = async function(id) {
@@ -915,7 +1289,7 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentCategory = btn.getAttribute('data-cat');
-            renderNewsGrid();
+            applyFiltersAndSearch();
         });
     });
 
@@ -931,6 +1305,7 @@
         document.body.style.overflow = 'auto';
     });
 
+    setupSearch();
     fetchNews();
     setInterval(fetchNews, 70000);
 </script>
