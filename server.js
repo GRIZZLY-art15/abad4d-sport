@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3005;
 process.env.TZ = 'Asia/Jakarta';
 
 // ============ KONFIGURASI ============
-const SITE_URL = 'https://abad4d-sports.onrender.com';
+const SITE_URL = 'ABAD4D.COM';
 const HASHTAGS = ['#ABAD4D', '#ABADSPORT', '#SITUSBETTING', '#STARGAMINGASIA'];
 
 // ============ KATEGORI ============
