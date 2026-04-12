@@ -15,8 +15,8 @@ const PORT = process.env.PORT || 3005;
 process.env.TZ = 'Asia/Jakarta';
 
 // ============ KONFIGURASI ============
-const ADMIN_SECRET_KEY = 'ABAD4D_SPORT_SECRET_2026';
-const SITE_URL = process.env.SITE_URL || 'http://localhost:3005';
+const SITE_URL = 'https://abad4d-sports.onrender.com';
+const HASHTAGS = ['#ABAD4D', '#ABADSPORT', '#SITUSBETTING', '#STARGAMINGASIA'];
 
 // ============ KATEGORI ============
 const CATEGORIES = {
@@ -31,47 +31,17 @@ const CATEGORIES = {
 // ============ KATA DILARANG ============
 const FORBIDDEN = ['iklan', 'promo', 'bonus', 'deposit', 'slot', 'casino', 'poker', 'togel'];
 
-// ============ CORS ============
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
-app.use(express.static(__dirname));
-app.use('/uploads', express.static('uploads'));
-
-// ============ DATABASE ============
-if (!fs.existsSync('uploads')) fs.mkdirSync('uploads', { recursive: true });
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname))
-});
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
-
-const db = new sqlite3.Database('pialadunia.db');
-
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS news (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        content TEXT NOT NULL,
-        image TEXT NOT NULL DEFAULT 'default.jpg',
-        category TEXT DEFAULT 'Berita Bola',
-        status TEXT DEFAULT 'published',
-        published_at DATETIME,
-        views INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
-    db.run(`CREATE TABLE IF NOT EXISTS admin (
-        id INTEGER PRIMARY KEY,
-        username TEXT UNIQUE,
-        password TEXT
-    )`);
-});
-
-// ============ ADMIN DEFAULT ============
-bcrypt.hash('admin123', 10).then(hash => {
-    db.run(`INSERT OR IGNORE INTO admin (id, username, password) VALUES (1, 'admin', ?)`, [hash]);
-    console.log('✅ Admin: admin / admin123');
-});
+// ============ KATA YANG HARUS DIHAPUS DARI KONTEN ============
+const UNWANTED_WORDS = [
+    'Bola.net', 'Goal.com', 'bola.net', 'goal.com', 'BOLANET', 'GOAL.COM',
+    'Liputan6.com', 'Kompas.com', 'CNN Indonesia', 'Tribunnews.com', 'Detik.com',
+    'Baca juga', 'Baca Juga', 'Lihat Juga', 'Simak Juga', 'Baca selengkapnya',
+    'Selengkapnya di', 'Sumber:', 'Dilansir dari', 'Melansir', 'Mengutip',
+    'Dikutip dari', 'Dari berbagai sumber', 'Editor:', 'Redaktur:', 'Penulis:',
+    'ADVERTISEMENT', 'SCROLL TO CONTINUE', 'BERITA LAINNYA', 'TERPOPULER',
+    'Share this article', 'Follow us', 'Subscribe to', 'Click here',
+    'Read more', 'Baca lebih lanjut', 'Kunjungi kami', 'Ikuti kami'
+];
 
 // ============ FUNGSI BANTUAN ============
 function getWIB() {
@@ -92,16 +62,62 @@ function isValidNews(title) {
     return t.includes('bola') || t.includes('sepak') || t.includes('liga') || t.includes('piala');
 }
 
+// ============ FUNGSI MEMBERSIHKAN KONTEN ============
 function cleanContent(text) {
     if (!text) return '';
-    return text
-        .replace(/[^\x20-\x7E\s\u00C0-\u00FF]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .substring(0, 1500);
+    
+    let cleaned = text;
+    
+    // Hapus kata yang tidak diinginkan
+    for (const word of UNWANTED_WORDS) {
+        const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        cleaned = cleaned.replace(regex, '');
+    }
+    
+    // Hapus URL
+    cleaned = cleaned.replace(/https?:\/\/[^\s]+/gi, '');
+    
+    // Hapus mention @
+    cleaned = cleaned.replace(/@\w+/gi, '');
+    
+    // Hapus karakter aneh
+    cleaned = cleaned.replace(/[^\x20-\x7E\s\u00C0-\u00FF]/g, '');
+    
+    // Hapus multiple spasi
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    
+    cleaned = cleaned.trim();
+    
+    if (!cleaned || cleaned.length < 50) {
+        return 'Berita sepakbola terbaru langsung dari lapangan. Simak update lengkapnya hanya di ABAD4D SPORT.';
+    }
+    
+    return cleaned.substring(0, 1500);
 }
 
-// ============ DOWNLOAD GAMBAR (RINGAN) ============
+// ============ FUNGSI MEMBUAT KONTEN DENGAN HASHTAG ============
+function createContentWithHashtags(title, originalContent) {
+    let content = cleanContent(originalContent || '');
+    
+    if (!content || content.length < 80) {
+        const titleClean = title.replace(/[!?]+$/, '');
+        content = `${titleClean}. Kabar terbaru dari dunia sepakbola yang wajib Anda ketahui. Dapatkan informasi lengkap dan terupdate seputar pertandingan, transfer pemain, dan berita menarik lainnya. Jangan lewatkan berita-berita eksklusif hanya di ABAD4D SPORT.`;
+    }
+    
+    // Bersihkan lagi dari sisa kata
+    content = content.replace(/Bola\.net|Goal\.com|bola\.net|goal\.com/gi, '');
+    content = content.replace(/Dilansir dari|Melansir|Mengutip|Dikutip dari/gi, '');
+    
+    const linkText = `\n\n🔗 Baca selengkapnya: ${SITE_URL}\n`;
+    const hashtagText = `\n📢 Ikuti terus berita terupdate kami!\n${HASHTAGS.join(' ')}\n`;
+    
+    let finalContent = content + linkText + hashtagText;
+    finalContent = finalContent.replace(/\n{3,}/g, '\n\n');
+    
+    return finalContent.substring(0, 2000);
+}
+
+// ============ DOWNLOAD GAMBAR ============
 async function downloadImage(url, retry = 0) {
     if (!url || !url.startsWith('http')) return null;
     try {
@@ -126,7 +142,7 @@ async function downloadImage(url, retry = 0) {
     }
 }
 
-// ============ SCRAPE BERITA (DIBATASI) ============
+// ============ SCRAPE BERITA ============
 async function scrapeNews() {
     const sources = [
         { name: 'Bola.net', url: 'https://www.bola.net/', cat: 'Berita Bola' },
@@ -143,7 +159,13 @@ async function scrapeNews() {
             $('a').each((i, el) => {
                 if (count >= 5) return;
                 const href = $(el).attr('href');
-                const text = $(el).text().trim();
+                let text = $(el).text().trim();
+                
+                // Hapus nama sumber dari judul
+                text = text.replace(/Bola\.net|bola\.net/gi, '');
+                text = text.replace(/ - Bola\.net| - bola\.net/gi, '');
+                text = text.trim();
+                
                 if (href && text && text.length > 20 && text.length < 150 && isValidNews(text)) {
                     let fullUrl = href;
                     if (!fullUrl.startsWith('http')) {
@@ -172,10 +194,13 @@ async function scrapeContent(url) {
     try {
         const response = await axios.get(url, { timeout: 8000 });
         const $ = cheerio.load(response.data);
-        $('script, style, iframe, .ad, .ads, nav, header, footer').remove();
+        
+        // Hapus elemen tidak perlu
+        $('script, style, iframe, .ad, .ads, nav, header, footer, .sidebar, .comments, .share, .social, .related, .popular, .recommended, .newsletter').remove();
         
         let content = '';
-        const selectors = ['article', '.article-content', '.post-content', '.entry-content', 'main'];
+        const selectors = ['article', '.article-content', '.post-content', '.entry-content', '.detail-text', '.article-body', '.content-detail', 'main'];
+        
         for (const sel of selectors) {
             const el = $(sel);
             if (el.length) {
@@ -183,15 +208,26 @@ async function scrapeContent(url) {
                 if (content.length > 200) break;
             }
         }
+        
         if (!content || content.length < 100) {
             const paragraphs = [];
             $('p').each((i, p) => {
                 const text = $(p).text().trim();
-                if (text.length > 40 && paragraphs.length < 5) paragraphs.push(text);
+                if (text.length > 50 && !text.toLowerCase().includes('cookie') && paragraphs.length < 8) {
+                    paragraphs.push(text);
+                }
             });
             content = paragraphs.join(' ');
         }
-        return cleanContent(content).substring(0, 1000);
+        
+        // Bersihkan dari sisa kata tidak diinginkan
+        content = content.replace(/\b(Bola\.net|Goal\.com|bola\.net|goal\.com)\b/gi, '');
+        content = content.replace(/\b(Dilansir dari|Melansir|Mengutip|Dikutip dari|Sumber:)\b/gi, '');
+        content = content.replace(/\b(Baca juga|Baca Juga|Lihat Juga|Simak Juga|Selengkapnya)\b/gi, '');
+        content = content.replace(/https?:\/\/[^\s]+/gi, '');
+        content = content.replace(/\s+/g, ' ');
+        
+        return content.trim();
     } catch (error) {
         return null;
     }
@@ -207,10 +243,10 @@ async function isDuplicate(title) {
     });
 }
 
-// ============ UPDATE BERITA (1 POST PER 10 MENIT) ============
+// ============ UPDATE BERITA ============
 let isUpdating = false;
 let lastPostTime = 0;
-const POST_INTERVAL = 10 * 60 * 1000; // 10 menit
+const POST_INTERVAL = 10 * 60 * 1000;
 
 async function updateNews() {
     const now = Date.now();
@@ -240,21 +276,16 @@ async function updateNews() {
         
         console.log(`📌 ${article.category}: ${article.title.substring(0, 50)}...`);
         
-        // Ambil konten
         let content = await scrapeContent(article.link);
         if (!content || content.length < 100) {
-            content = `Berita terbaru dari dunia sepakbola. ${article.title}. Simak update selengkapnya hanya di ABAD4D SPORT.`;
+            content = `${article.title}. Kabar terbaru dari dunia sepakbola yang wajib Anda ketahui. Simak update lengkapnya hanya di ABAD4D SPORT.`;
         }
         
-        // Cari gambar
         let imageFile = null;
-        
-        // Cari gambar dari halaman artikel
         try {
             const imgRes = await axios.get(article.link, { timeout: 8000 });
             const $ = cheerio.load(imgRes.data);
-            const imgSrc = $('meta[property="og:image"]').attr('content') || 
-                          $('img').first().attr('src');
+            const imgSrc = $('meta[property="og:image"]').attr('content') || $('img').first().attr('src');
             if (imgSrc && imgSrc.startsWith('http')) {
                 imageFile = await downloadImage(imgSrc);
             }
@@ -262,11 +293,12 @@ async function updateNews() {
         
         if (!imageFile) imageFile = 'default.jpg';
         
-        // Simpan ke database
+        const finalContent = createContentWithHashtags(article.title, content);
+        
         await new Promise((resolve) => {
             db.run(
                 `INSERT INTO news (title, content, image, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?)`,
-                [article.title.substring(0, 200), content, imageFile, article.category, 'published', new Date().toISOString()],
+                [article.title.substring(0, 200), finalContent, imageFile, article.category, 'published', new Date().toISOString()],
                 (err) => {
                     if (err) {
                         console.log(`❌ Gagal simpan: ${err.message}`);
@@ -274,7 +306,9 @@ async function updateNews() {
                         posted = true;
                         lastPostTime = Date.now();
                         console.log(`✅ BERITA DIPOSTING!`);
-                        console.log(`📅 Next post: 10 menit lagi`);
+                        console.log(`   📝 ${HASHTAGS.join(' ')}`);
+                        console.log(`   🔗 ${SITE_URL}`);
+                        console.log(`   🧹 Konten sudah dibersihkan dari sumber`);
                     }
                     resolve();
                 }
@@ -290,6 +324,46 @@ async function updateNews() {
     
     isUpdating = false;
 }
+
+// ============ MIDDLEWARE ============
+app.use(cors());
+app.use(express.json({ limit: '1mb' }));
+app.use(express.static(__dirname));
+app.use('/uploads', express.static('uploads'));
+
+if (!fs.existsSync('uploads')) fs.mkdirSync('uploads', { recursive: true });
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname))
+});
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+
+const db = new sqlite3.Database('pialadunia.db');
+
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS news (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        image TEXT NOT NULL DEFAULT 'default.jpg',
+        category TEXT DEFAULT 'Berita Bola',
+        status TEXT DEFAULT 'published',
+        published_at DATETIME,
+        views INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+    db.run(`CREATE TABLE IF NOT EXISTS admin (
+        id INTEGER PRIMARY KEY,
+        username TEXT UNIQUE,
+        password TEXT
+    )`);
+});
+
+bcrypt.hash('admin123', 10).then(hash => {
+    db.run(`INSERT OR IGNORE INTO admin (id, username, password) VALUES (1, 'admin', ?)`, [hash]);
+    console.log('✅ Admin: admin / admin123');
+});
 
 // ============ API ENDPOINTS ============
 app.post('/api/login', (req, res) => {
@@ -317,8 +391,9 @@ app.post('/api/news', upload.single('image'), (req, res) => {
     const { title, content, category, status } = req.body;
     const image = req.file ? req.file.filename : 'default.jpg';
     if (!title || !content) return res.status(400).json({ message: 'Judul dan isi harus diisi!' });
+    const finalContent = createContentWithHashtags(title, content);
     db.run('INSERT INTO news (title, content, image, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [title.substring(0, 200), content, image, category || 'Berita Bola', status || 'published', new Date().toISOString()],
+        [title.substring(0, 200), finalContent, image, category || 'Berita Bola', status || 'published', new Date().toISOString()],
         function(err) {
             res.json(err ? { message: 'Gagal menyimpan' } : { message: 'Berita ditambahkan!', id: this.lastID });
         });
@@ -327,14 +402,15 @@ app.post('/api/news', upload.single('image'), (req, res) => {
 app.put('/api/news/:id', upload.single('image'), (req, res) => {
     const { title, content, category, status } = req.body;
     const id = req.params.id;
+    const finalContent = createContentWithHashtags(title, content);
     if (req.file) {
         db.run('UPDATE news SET title = ?, content = ?, image = ?, category = ?, status = ? WHERE id = ?',
-            [title, content, req.file.filename, category, status, id], (err) => {
+            [title, finalContent, req.file.filename, category, status, id], (err) => {
                 res.json(err ? { message: 'Gagal update' } : { message: 'Berita diupdate!' });
             });
     } else {
         db.run('UPDATE news SET title = ?, content = ?, category = ?, status = ? WHERE id = ?',
-            [title, content, category, status, id], (err) => {
+            [title, finalContent, category, status, id], (err) => {
                 res.json(err ? { message: 'Gagal update' } : { message: 'Berita diupdate!' });
             });
     }
@@ -361,11 +437,13 @@ app.listen(PORT, async () => {
     console.log(`\n⚽ ABAD4D SPORT - BOT BERITA SEPAKBOLA ⚽`);
     console.log(`📍 Server: http://localhost:${PORT}`);
     console.log(`🔑 Login: admin / admin123`);
-    console.log(`\n✅ OPTIMASI DITERAPKAN:`);
-    console.log(`   ✅ Scraping dibatasi (2 sumber, 5 artikel/sumber)`);
-    console.log(`   ✅ Timeout lebih pendek (8-10 detik)`);
-    console.log(`   ✅ Database query dibatasi LIMIT 50`);
-    console.log(`   ✅ Upload file maks 5MB`);
+    console.log(`🔗 Website: ${SITE_URL}`);
+    console.log(`📝 Hashtag: ${HASHTAGS.join(' ')}`);
+    console.log(`\n✅ FITUR AKTIF:`);
+    console.log(`   ✅ Konten dibersihkan dari "Bola.net", "Goal.com" dll`);
+    console.log(`   ✅ Auto hashtag #ABAD4D #ABADSPORT #SITUSBETTING #STARGAMINGASIA`);
+    console.log(`   ✅ Auto link ke ${SITE_URL}`);
+    console.log(`   ✅ Scraping 2 sumber (5 artikel/sumber)`);
     console.log(`   ✅ Interval posting: 10 menit`);
     console.log(`\n📰 Memulai update pertama...\n`);
     
