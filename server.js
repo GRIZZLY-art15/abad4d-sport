@@ -382,92 +382,125 @@ function detectCategory(title) {
     return 'Berita Bola';
 }
 
-// ============ FITUR ANTI DUPLICATE YANG DIPERKUAT ============
-async function isDuplicate(title, excludeId = null) {
+// ============ FITUR ANTI DUPLICATE YANG SANGAT KUAT ============
+function normalizeTitle(title) {
+    return title.toLowerCase()
+        .replace(/[^\w\s]/gi, '') // Hapus tanda baca
+        .replace(/\s+/g, ' ') // Normalize spasi
+        .trim()
+        .substring(0, 150);
+}
+
+async function isDuplicateStrict(title, excludeId = null) {
     return new Promise((resolve) => {
-        const cleanTitle = title.toLowerCase()
-            .replace(/[^\w\s]/gi, '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .substring(0, 100);
+        const normalizedTitle = normalizeTitle(title);
         
-        let query = `SELECT id, title FROM news WHERE LOWER(REPLACE(REPLACE(REPLACE(title, '?', ''), '!', ''), '.', '')) LIKE ?`;
-        let params = [`%${cleanTitle}%`];
+        // Query yang lebih ketat
+        let query = `SELECT id, title FROM news WHERE 
+            LOWER(REPLACE(REPLACE(REPLACE(REPLACE(title, '?', ''), '!', ''), '.', ''), ',', '')) = ? 
+            OR LOWER(title) LIKE ? 
+            OR LOWER(title) LIKE ?`;
+        
+        let params = [
+            normalizedTitle,
+            `%${normalizedTitle.substring(0, 50)}%`,
+            `%${normalizedTitle.substring(20, 80)}%`
+        ];
         
         if (excludeId) {
             query += ` AND id != ?`;
             params.push(excludeId);
         }
         
-        db.get(query, params, (err, row) => {
-            if (row) {
-                console.log(`⚠️ DUPLIKAT TERDETEKSI: "${title.substring(0, 50)}..." sama dengan ID ${row.id} "${row.title.substring(0, 50)}..."`);
+        db.all(query, params, (err, rows) => {
+            if (rows && rows.length > 0) {
+                console.log(`⚠️ DUPLIKAT TERDETEKSI: "${title.substring(0, 50)}..."`);
+                rows.forEach(row => {
+                    console.log(`   → Sama dengan ID ${row.id}: "${row.title.substring(0, 50)}..."`);
+                });
+                resolve(true);
+            } else {
+                resolve(false);
             }
-            resolve(!!row);
         });
     });
 }
 
-// ============ FUNGSI CEK DAN HAPUS DOUBLE POSTINGAN ============
+// ============ FUNGSI CEK DAN HAPUS DOUBLE POSTINGAN (EKSTREM) ============
 async function checkAndRemoveDuplicates() {
-    console.log('\n🔍 MEMERIKSA DOUBLE POSTINGAN...');
+    console.log('\n' + '='.repeat(60));
+    console.log('🔍 MEMERIKSA DAN MEMBERSIHKAN DOUBLE POSTINGAN');
+    console.log('='.repeat(60));
     
     return new Promise((resolve) => {
         // Ambil semua berita
-        db.all('SELECT id, title, published_at, created_at FROM news ORDER BY id DESC', async (err, allNews) => {
+        db.all('SELECT id, title, published_at, created_at FROM news ORDER BY id ASC', async (err, allNews) => {
             if (err || !allNews || allNews.length === 0) {
                 console.log('⚠️ Tidak ada data untuk diperiksa');
                 resolve(0);
                 return;
             }
             
-            const duplicates = [];
+            console.log(`📊 Total berita di database: ${allNews.length}`);
+            
+            const toDelete = new Set(); // Set untuk ID yang akan dihapus
             const seen = new Map(); // Map untuk menyimpan title yang sudah dilihat
             
             for (const news of allNews) {
-                const cleanTitle = news.title.toLowerCase()
-                    .replace(/[^\w\s]/gi, '')
-                    .replace(/\s+/g, ' ')
-                    .trim()
-                    .substring(0, 100);
+                const normalizedTitle = normalizeTitle(news.title);
                 
-                if (seen.has(cleanTitle)) {
-                    // Ini duplikat
-                    const existingNews = seen.get(cleanTitle);
-                    duplicates.push({
-                        id: news.id,
-                        title: news.title,
-                        duplicateOf: existingNews.id,
-                        existingTitle: existingNews.title
-                    });
+                if (seen.has(normalizedTitle)) {
+                    // Ini duplikat - tandai untuk dihapus
+                    toDelete.add(news.id);
+                    const originalId = seen.get(normalizedTitle);
+                    console.log(`🗑️ DUPLIKAT: ID ${news.id} = "${news.title.substring(0, 40)}..." (sama dengan ID ${originalId})`);
                 } else {
-                    seen.set(cleanTitle, {
-                        id: news.id,
-                        title: news.title,
-                        published_at: news.published_at,
-                        created_at: news.created_at
-                    });
+                    seen.set(normalizedTitle, news.id);
                 }
             }
             
-            if (duplicates.length === 0) {
+            // Cek juga berdasarkan kesamaan 70% untuk kasus yang sedikit berbeda
+            const titles = Array.from(seen.keys());
+            for (let i = 0; i < titles.length; i++) {
+                for (let j = i + 1; j < titles.length; j++) {
+                    const similarity = calculateSimilarity(titles[i], titles[j]);
+                    if (similarity > 0.7) { // Lebih dari 70% sama
+                        const id1 = seen.get(titles[i]);
+                        const id2 = seen.get(titles[j]);
+                        // Hapus yang lebih baru
+                        const news1 = allNews.find(n => n.id === id1);
+                        const news2 = allNews.find(n => n.id === id2);
+                        if (news1 && news2) {
+                            if (new Date(news1.created_at) > new Date(news2.created_at)) {
+                                toDelete.add(id1);
+                                console.log(`🗑️ DUPLIKAT (${Math.round(similarity*100)}%): ID ${id1} mirip dengan ID ${id2}`);
+                            } else {
+                                toDelete.add(id2);
+                                console.log(`🗑️ DUPLIKAT (${Math.round(similarity*100)}%): ID ${id2} mirip dengan ID ${id1}`);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (toDelete.size === 0) {
                 console.log('✅ Tidak ditemukan double postingan!');
                 resolve(0);
                 return;
             }
             
-            console.log(`⚠️ Ditemukan ${duplicates.length} double postingan!`);
+            console.log(`\n⚠️ Ditemukan ${toDelete.size} double postingan!`);
             
-            // Hapus duplikat (keep yang paling lama/pertama)
+            // Hapus semua duplikat
             let deletedCount = 0;
-            for (const dup of duplicates) {
+            for (const id of toDelete) {
                 await new Promise((resolveDelete) => {
-                    db.run('DELETE FROM news WHERE id = ?', [dup.id], (err) => {
+                    db.run('DELETE FROM news WHERE id = ?', [id], (err) => {
                         if (err) {
-                            console.log(`❌ Gagal hapus duplikat ID ${dup.id}: ${err.message}`);
+                            console.log(`❌ Gagal hapus ID ${id}: ${err.message}`);
                         } else {
                             deletedCount++;
-                            console.log(`🗑️ DUPLIKAT DIHAPUS: "${dup.title.substring(0, 50)}..." (sama dengan ID ${dup.duplicateOf})`);
+                            console.log(`✅ BERHASIL DIHAPUS: ID ${id}`);
                         }
                         resolveDelete();
                     });
@@ -475,9 +508,17 @@ async function checkAndRemoveDuplicates() {
             }
             
             if (deletedCount > 0) {
-                console.log(`✅ Berhasil menghapus ${deletedCount} double postingan!`);
-                backupDatabase();
-                generateSitemap();
+                console.log(`\n✅ Total ${deletedCount} double postingan berhasil dihapus!`);
+                await backupDatabase();
+                await generateSitemap();
+                
+                // Reset auto increment jika perlu
+                await new Promise((resolveReset) => {
+                    db.run("DELETE FROM sqlite_sequence WHERE name='news'", (err) => {
+                        if (!err) console.log('🔄 Sequence ID direset');
+                        resolveReset();
+                    });
+                });
             }
             
             resolve(deletedCount);
@@ -485,16 +526,77 @@ async function checkAndRemoveDuplicates() {
     });
 }
 
-// Fungsi untuk membersihkan duplikat secara otomatis setiap jam
-let lastDuplicateCheck = 0;
-const DUPLICATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1 jam
+// Fungsi untuk menghitung similarity antara dua string
+function calculateSimilarity(str1, str2) {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const editDistance = levenshteinDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+}
 
-async function autoCleanDuplicates() {
-    const now = Date.now();
-    if (now - lastDuplicateCheck >= DUPLICATE_CHECK_INTERVAL) {
-        lastDuplicateCheck = now;
-        await checkAndRemoveDuplicates();
+function levenshteinDistance(a, b) {
+    const matrix = [];
+    
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
     }
+    
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    
+    return matrix[b.length][a.length];
+}
+
+// Cleanup function untuk menghapus semua duplikat di awal
+async function fullCleanup() {
+    console.log('\n🧹 MELAKUKAN FULL CLEANUP DATABASE...');
+    await checkAndRemoveDuplicates();
+    
+    // Tambahan: hapus berdasarkan URL jika ada
+    return new Promise((resolve) => {
+        db.all('SELECT id, title, COUNT(*) as count FROM news GROUP BY LOWER(REPLACE(REPLACE(REPLACE(title, "?", ""), "!", ""), ".", "")) HAVING count > 1', async (err, duplicates) => {
+            if (duplicates && duplicates.length > 0) {
+                console.log(`\n⚠️ Ditemukan grup duplikat: ${duplicates.length} grup`);
+                for (const dup of duplicates) {
+                    await new Promise((resolveDel) => {
+                        db.all('SELECT id FROM news WHERE LOWER(REPLACE(REPLACE(REPLACE(title, "?", ""), "!", ""), ".", "")) = ? ORDER BY id ASC', 
+                            [dup.title.toLowerCase().replace(/[^\w\s]/gi, '')], 
+                            (err, rows) => {
+                                if (rows && rows.length > 1) {
+                                    // Keep the first, delete the rest
+                                    for (let i = 1; i < rows.length; i++) {
+                                        db.run('DELETE FROM news WHERE id = ?', [rows[i].id]);
+                                        console.log(`🗑️ Hapus duplikat grup: ID ${rows[i].id}`);
+                                    }
+                                }
+                                resolveDel();
+                            });
+                    });
+                }
+                await backupDatabase();
+                await generateSitemap();
+            }
+            resolve();
+        });
+    });
 }
 
 function cleanContent(content) {
@@ -709,21 +811,25 @@ const POST_INTERVAL_MS = 10 * 60 * 1000;
 async function updateNews() {
     const now = getWIB();
     const nowMs = Date.now();
+    
+    // Cek dan bersihkan double postingan SETIAP KALI akan posting
+    await fullCleanup();
+    
     if (nowMs - lastPostTime < POST_INTERVAL_MS && lastPostTime > 0) {
         const remaining = Math.round((POST_INTERVAL_MS - (nowMs - lastPostTime)) / 1000);
         console.log(`\n⏳ ${now} WIB - Post berikutnya: ${Math.floor(remaining / 60)}m ${remaining % 60}s lagi`);
-        // Cek double postingan setiap kali sebelum update
-        await autoCleanDuplicates();
         return;
     }
-    if (isUpdating) { console.log(`\n⏳ ${now} WIB - Update sedang berjalan...`); return; }
+    
+    if (isUpdating) { 
+        console.log(`\n⏳ ${now} WIB - Update sedang berjalan...`); 
+        return; 
+    }
+    
     isUpdating = true;
     console.log('\n' + '='.repeat(60));
     console.log(`⚽ ${now} WIB - MENCARI BERITA BARU (Setiap 10 menit)`);
     console.log('='.repeat(60));
-    
-    // Cek dan hapus double postingan sebelum mencari berita baru
-    await checkAndRemoveDuplicates();
     
     let allArticles = [];
     console.log('\n📡 SCRAPING BERITA...');
@@ -731,23 +837,31 @@ async function updateNews() {
     console.log(`\n  📰 Website: ${webArticles.length} berita`);
     console.log(`  📰 Google News: ${googleArticles.length} berita`);
     allArticles.push(...webArticles, ...googleArticles);
+    
+    // Filter unik berdasarkan judul
     const unique = [];
     const seen = new Set();
     for (const article of allArticles) {
-        const key = article.title.substring(0, 80).toLowerCase().replace(/[^\w\s]/gi, '');
-        if (!seen.has(key)) { seen.add(key); unique.push(article); }
+        const normalizedKey = normalizeTitle(article.title);
+        if (!seen.has(normalizedKey)) { 
+            seen.add(normalizedKey); 
+            unique.push(article); 
+        }
     }
+    
     console.log(`\n📊 TOTAL BERITA UNIK: ${unique.length}`);
     unique.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+    
     let posted = false;
     let checkedCount = 0;
+    
     for (const article of unique) {
         if (posted) break;
         checkedCount++;
         const category = detectCategory(article.title);
         
-        // Cek duplikat dengan database existing
-        const isDuplicateNews = await isDuplicate(article.title);
+        // CEK DUPLIKAT SANGAT KETAT sebelum insert
+        const isDuplicateNews = await isDuplicateStrict(article.title);
         if (isDuplicateNews) { 
             console.log(`  ⏭️ [DUPLIKAT] ${article.title.substring(0, 50)}... (sudah ada di database)`);
             continue; 
@@ -755,13 +869,35 @@ async function updateNews() {
         
         console.log(`\n  📌 [${category}] ${article.title.substring(0, 55)}...`);
         let content = null;
-        if (article.link) { console.log(`      🔗 Mengambil konten...`); content = await scrapeArticleContent(article.link); await sleep(300); }
+        if (article.link) { 
+            console.log(`      🔗 Mengambil konten...`); 
+            content = await scrapeArticleContent(article.link); 
+            await sleep(300); 
+        }
+        
         let imageFile = null;
         if (article.image) imageFile = await downloadImage(article.image);
-        if (!imageFile && article.link) { console.log(`      🔍 Cari gambar alternatif...`); const fallbackImage = await extractImageFromArticle(article.link); if (fallbackImage) imageFile = await downloadImage(fallbackImage); }
-        if (!imageFile) { console.log(`      ❌ GAGAL gambar - cari berita lain`); continue; }
+        if (!imageFile && article.link) { 
+            console.log(`      🔍 Cari gambar alternatif...`); 
+            const fallbackImage = await extractImageFromArticle(article.link); 
+            if (fallbackImage) imageFile = await downloadImage(fallbackImage); 
+        }
+        
+        if (!imageFile) { 
+            console.log(`      ❌ GAGAL gambar - cari berita lain`); 
+            continue; 
+        }
+        
         const tempId = Date.now();
         const finalContent = createDescription(article.title, content, category, tempId);
+        
+        // Double check sebelum insert (untuk memastikan tidak ada duplikat saat proses)
+        const stillDuplicate = await isDuplicateStrict(article.title);
+        if (stillDuplicate) {
+            console.log(`      ⚠️ Berita menjadi duplikat saat proses, skip...`);
+            continue;
+        }
+        
         await new Promise((resolve) => {
             db.run(`INSERT INTO news (title, content, image, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?)`,
                 [article.title.substring(0, 200), finalContent, imageFile, category, 'published', article.published_at],
@@ -776,13 +912,25 @@ async function updateNews() {
                         console.log(`      📅 Next post: 10 menit lagi`); 
                         backupDatabase(); 
                         generateSitemap(); 
+                        
+                        // Langsung cek duplikat lagi setelah posting
+                        setTimeout(() => {
+                            checkAndRemoveDuplicates();
+                        }, 1000);
                     }
                     resolve();
                 });
         });
         await sleep(500);
     }
-    if (!posted) { console.log(`\n⚠️ TIDAK ADA BERITA BARU!`); console.log(`   📊 Total dicek: ${checkedCount} berita`); const totalNews = await getTotalNews(); console.log(`   💾 Total di database: ${totalNews}`); }
+    
+    if (!posted) { 
+        console.log(`\n⚠️ TIDAK ADA BERITA BARU!`); 
+        console.log(`   📊 Total dicek: ${checkedCount} berita`); 
+        const totalNews = await getTotalNews(); 
+        console.log(`   💾 Total di database: ${totalNews}`); 
+    }
+    
     console.log('\n' + '='.repeat(60));
     console.log(`✅ UPDATE SELESAI!`);
     console.log(`   📰 Status: ${posted ? 'BERHASIL POSTING' : 'TIDAK ADA BERITA'}`);
@@ -822,6 +970,7 @@ db.serialize(() => {
     db.run(`CREATE INDEX IF NOT EXISTS idx_title ON news(title)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_published_at ON news(published_at)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_category ON news(category)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_created_at ON news(created_at)`);
     db.run(`CREATE TABLE IF NOT EXISTS admin (
         id INTEGER PRIMARY KEY,
         username TEXT UNIQUE,
@@ -838,8 +987,8 @@ setTimeout(async () => {
     await restoreDatabase();
     await generateSitemap();
     await submitToGoogle();
-    // Cek double postingan saat startup
-    await checkAndRemoveDuplicates();
+    // Full cleanup saat startup
+    await fullCleanup();
 }, 1000);
 
 // ============ API UNTUK CEK DAN HAPUS DOUBLE POSTINGAN ============
@@ -848,6 +997,15 @@ app.get('/api/check-duplicates', async (req, res) => {
     res.json({ 
         success: true, 
         message: `Pengecekan selesai! ${deleted} double postingan dihapus.`,
+        deletedCount: deleted 
+    });
+});
+
+app.get('/api/full-cleanup', async (req, res) => {
+    const deleted = await fullCleanup();
+    res.json({ 
+        success: true, 
+        message: `Full cleanup selesai! Double postingan dihapus.`,
         deletedCount: deleted 
     });
 });
@@ -961,29 +1119,39 @@ app.listen(PORT, async () => {
     console.log(`📍 Server: http://localhost:${PORT}`);
     console.log(`🔑 Admin: admin / admin123`);
     console.log(`🔐 Secret Key: ${ADMIN_SECRET_KEY}`);
-    console.log(`\n🤖 FITUR CERDAS:`);
+    console.log(`\n🤖 FITUR CERDAS ULTIMATE:`);
     console.log(`   ✅ AI Rewrite (Natural seperti manusia)`);
     console.log(`   ✅ Auto Internal Linking`);
     console.log(`   ✅ Sitemap Generator (Otomatis)`);
     console.log(`   ✅ Auto Submit ke Google & Bing`);
     console.log(`   ✅ Ranking Booster (SEO Ready)`);
     console.log(`   ✅ Scraping Lebih Bersih`);
-    console.log(`   ✅ Anti Duplicate KUAT (Cek sebelum posting)`);
-    console.log(`   ✅ AUTO HAPUS DOUBLE POSTINGAN (Setiap jam)`);
+    console.log(`   ✅ ANTI DUPLICATE EKSTREM (Levenshtein Distance)`);
+    console.log(`   ✅ AUTO HAPUS DOUBLE POSTINGAN (Setiap saat)`);
+    console.log(`   ✅ FULL CLEANUP DATABASE`);
+    console.log(`   ✅ Similarity Check >70% otomatis hapus`);
     console.log(`   ✅ Gambar Valid (Cek URL)`);
     console.log(`   ✅ Ganti Password Admin`);
-    console.log(`   ✅ API Check Duplicates: /api/check-duplicates`);
+    console.log(`   ✅ API: /api/check-duplicates`);
+    console.log(`   ✅ API: /api/full-cleanup`);
     console.log(`\n📡 SUMBER: Bola.net, Goal.com, Google News`);
     console.log(`⏰ UPDATE: Setiap 10 menit (1 postingan)`);
-    console.log(`🗑️ AUTO CLEAN: Cek & hapus double setiap 1 jam`);
+    console.log(`🗑️ AUTO CLEAN: Cek & hapus double setiap 1 jam + setiap akan posting`);
     console.log(`📊 SITEMAP: ${SITE_URL}/sitemap.xml`);
     console.log(`🤖 ROBOTS: ${SITE_URL}/robots.txt`);
+    console.log(`\n📰 Memulai cleanup pertama...\n`);
+    
+    // Cleanup total sebelum mulai
+    await fullCleanup();
+    
     console.log(`\n📰 Memulai update pertama...\n`);
     await updateNews();
+    
     setInterval(async () => { await updateNews(); }, 60 * 1000);
     setInterval(() => { backupDatabase(); generateSitemap(); submitToGoogle(); }, 60 * 60 * 1000);
-    // Auto check duplicates setiap 1 jam
-    setInterval(async () => { await checkAndRemoveDuplicates(); }, DUPLICATE_CHECK_INTERVAL);
+    // Auto check duplicates setiap 30 menit (lebih sering)
+    setInterval(async () => { await checkAndRemoveDuplicates(); }, 30 * 60 * 1000);
+    
     console.log('⏰ Timer aktif: Pengecekan setiap 1 menit, posting setiap 10 menit');
-    console.log('🗑️ Timer double cleaner: Pengecekan setiap 1 jam\n');
+    console.log('🗑️ Timer double cleaner: Pengecekan setiap 30 menit + setiap akan posting\n');
 });
