@@ -382,13 +382,119 @@ function detectCategory(title) {
     return 'Berita Bola';
 }
 
-async function isDuplicate(title) {
+// ============ FITUR ANTI DUPLICATE YANG DIPERKUAT ============
+async function isDuplicate(title, excludeId = null) {
     return new Promise((resolve) => {
-        const cleanTitle = title.toLowerCase().replace(/[^\w\s]/gi, '').substring(0, 80);
-        db.get(`SELECT id FROM news WHERE LOWER(REPLACE(REPLACE(title, '?', ''), '!', '')) LIKE ?`, [`%${cleanTitle}%`], (err, row) => {
+        const cleanTitle = title.toLowerCase()
+            .replace(/[^\w\s]/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .substring(0, 100);
+        
+        let query = `SELECT id, title FROM news WHERE LOWER(REPLACE(REPLACE(REPLACE(title, '?', ''), '!', ''), '.', '')) LIKE ?`;
+        let params = [`%${cleanTitle}%`];
+        
+        if (excludeId) {
+            query += ` AND id != ?`;
+            params.push(excludeId);
+        }
+        
+        db.get(query, params, (err, row) => {
+            if (row) {
+                console.log(`⚠️ DUPLIKAT TERDETEKSI: "${title.substring(0, 50)}..." sama dengan ID ${row.id} "${row.title.substring(0, 50)}..."`);
+            }
             resolve(!!row);
         });
     });
+}
+
+// ============ FUNGSI CEK DAN HAPUS DOUBLE POSTINGAN ============
+async function checkAndRemoveDuplicates() {
+    console.log('\n🔍 MEMERIKSA DOUBLE POSTINGAN...');
+    
+    return new Promise((resolve) => {
+        // Ambil semua berita
+        db.all('SELECT id, title, published_at, created_at FROM news ORDER BY id DESC', async (err, allNews) => {
+            if (err || !allNews || allNews.length === 0) {
+                console.log('⚠️ Tidak ada data untuk diperiksa');
+                resolve(0);
+                return;
+            }
+            
+            const duplicates = [];
+            const seen = new Map(); // Map untuk menyimpan title yang sudah dilihat
+            
+            for (const news of allNews) {
+                const cleanTitle = news.title.toLowerCase()
+                    .replace(/[^\w\s]/gi, '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .substring(0, 100);
+                
+                if (seen.has(cleanTitle)) {
+                    // Ini duplikat
+                    const existingNews = seen.get(cleanTitle);
+                    duplicates.push({
+                        id: news.id,
+                        title: news.title,
+                        duplicateOf: existingNews.id,
+                        existingTitle: existingNews.title
+                    });
+                } else {
+                    seen.set(cleanTitle, {
+                        id: news.id,
+                        title: news.title,
+                        published_at: news.published_at,
+                        created_at: news.created_at
+                    });
+                }
+            }
+            
+            if (duplicates.length === 0) {
+                console.log('✅ Tidak ditemukan double postingan!');
+                resolve(0);
+                return;
+            }
+            
+            console.log(`⚠️ Ditemukan ${duplicates.length} double postingan!`);
+            
+            // Hapus duplikat (keep yang paling lama/pertama)
+            let deletedCount = 0;
+            for (const dup of duplicates) {
+                await new Promise((resolveDelete) => {
+                    db.run('DELETE FROM news WHERE id = ?', [dup.id], (err) => {
+                        if (err) {
+                            console.log(`❌ Gagal hapus duplikat ID ${dup.id}: ${err.message}`);
+                        } else {
+                            deletedCount++;
+                            console.log(`🗑️ DUPLIKAT DIHAPUS: "${dup.title.substring(0, 50)}..." (sama dengan ID ${dup.duplicateOf})`);
+                        }
+                        resolveDelete();
+                    });
+                });
+            }
+            
+            if (deletedCount > 0) {
+                console.log(`✅ Berhasil menghapus ${deletedCount} double postingan!`);
+                backupDatabase();
+                generateSitemap();
+            }
+            
+            resolve(deletedCount);
+        });
+    });
+}
+
+// Fungsi untuk membersihkan duplikat secara otomatis setiap jam
+let lastDuplicateCheck = 0;
+const DUPLICATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1 jam
+
+async function autoCleanDuplicates() {
+    const now = Date.now();
+    if (now - lastDuplicateCheck >= DUPLICATE_CHECK_INTERVAL) {
+        lastDuplicateCheck = now;
+        await checkAndRemoveDuplicates();
+    }
 }
 
 function cleanContent(content) {
@@ -606,6 +712,8 @@ async function updateNews() {
     if (nowMs - lastPostTime < POST_INTERVAL_MS && lastPostTime > 0) {
         const remaining = Math.round((POST_INTERVAL_MS - (nowMs - lastPostTime)) / 1000);
         console.log(`\n⏳ ${now} WIB - Post berikutnya: ${Math.floor(remaining / 60)}m ${remaining % 60}s lagi`);
+        // Cek double postingan setiap kali sebelum update
+        await autoCleanDuplicates();
         return;
     }
     if (isUpdating) { console.log(`\n⏳ ${now} WIB - Update sedang berjalan...`); return; }
@@ -613,6 +721,10 @@ async function updateNews() {
     console.log('\n' + '='.repeat(60));
     console.log(`⚽ ${now} WIB - MENCARI BERITA BARU (Setiap 10 menit)`);
     console.log('='.repeat(60));
+    
+    // Cek dan hapus double postingan sebelum mencari berita baru
+    await checkAndRemoveDuplicates();
+    
     let allArticles = [];
     console.log('\n📡 SCRAPING BERITA...');
     const [webArticles, googleArticles] = await Promise.all([scrapeNews(), scrapeGoogleNews()]);
@@ -633,8 +745,14 @@ async function updateNews() {
         if (posted) break;
         checkedCount++;
         const category = detectCategory(article.title);
+        
+        // Cek duplikat dengan database existing
         const isDuplicateNews = await isDuplicate(article.title);
-        if (isDuplicateNews) { console.log(`  ⏭️ [DUPLIKAT] ${article.title.substring(0, 50)}...`); continue; }
+        if (isDuplicateNews) { 
+            console.log(`  ⏭️ [DUPLIKAT] ${article.title.substring(0, 50)}... (sudah ada di database)`);
+            continue; 
+        }
+        
         console.log(`\n  📌 [${category}] ${article.title.substring(0, 55)}...`);
         let content = null;
         if (article.link) { console.log(`      🔗 Mengambil konten...`); content = await scrapeArticleContent(article.link); await sleep(300); }
@@ -648,8 +766,17 @@ async function updateNews() {
             db.run(`INSERT INTO news (title, content, image, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?)`,
                 [article.title.substring(0, 200), finalContent, imageFile, category, 'published', article.published_at],
                 (err) => {
-                    if (err) { console.log(`      ❌ Gagal simpan: ${err.message}`); }
-                    else { posted = true; lastPostTime = Date.now(); console.log(`      ✅ BERITA BERHASIL DIPOSTING!`); console.log(`      📅 Next post: 10 menit lagi`); backupDatabase(); generateSitemap(); }
+                    if (err) { 
+                        console.log(`      ❌ Gagal simpan: ${err.message}`); 
+                    }
+                    else { 
+                        posted = true; 
+                        lastPostTime = Date.now(); 
+                        console.log(`      ✅ BERITA BERHASIL DIPOSTING!`); 
+                        console.log(`      📅 Next post: 10 menit lagi`); 
+                        backupDatabase(); 
+                        generateSitemap(); 
+                    }
                     resolve();
                 });
         });
@@ -711,7 +838,43 @@ setTimeout(async () => {
     await restoreDatabase();
     await generateSitemap();
     await submitToGoogle();
+    // Cek double postingan saat startup
+    await checkAndRemoveDuplicates();
 }, 1000);
+
+// ============ API UNTUK CEK DAN HAPUS DOUBLE POSTINGAN ============
+app.get('/api/check-duplicates', async (req, res) => {
+    const deleted = await checkAndRemoveDuplicates();
+    res.json({ 
+        success: true, 
+        message: `Pengecekan selesai! ${deleted} double postingan dihapus.`,
+        deletedCount: deleted 
+    });
+});
+
+app.post('/api/admin/check-duplicates', async (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    
+    try {
+        const decoded = Buffer.from(token, 'base64').toString();
+        const [username, timestamp, secretKey] = decoded.split(':');
+        if (username === ADMIN_USERNAME && secretKey === ADMIN_SECRET_KEY) {
+            const hoursSinceLogin = (Date.now() - parseInt(timestamp)) / (1000 * 60 * 60);
+            if (hoursSinceLogin < 24) {
+                const deleted = await checkAndRemoveDuplicates();
+                return res.json({ 
+                    success: true, 
+                    message: `Pengecekan selesai! ${deleted} double postingan dihapus.`,
+                    deletedCount: deleted 
+                });
+            }
+        }
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+    } catch (error) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+});
 
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
@@ -805,16 +968,22 @@ app.listen(PORT, async () => {
     console.log(`   ✅ Auto Submit ke Google & Bing`);
     console.log(`   ✅ Ranking Booster (SEO Ready)`);
     console.log(`   ✅ Scraping Lebih Bersih`);
-    console.log(`   ✅ Anti Duplicate Kuat`);
+    console.log(`   ✅ Anti Duplicate KUAT (Cek sebelum posting)`);
+    console.log(`   ✅ AUTO HAPUS DOUBLE POSTINGAN (Setiap jam)`);
     console.log(`   ✅ Gambar Valid (Cek URL)`);
     console.log(`   ✅ Ganti Password Admin`);
+    console.log(`   ✅ API Check Duplicates: /api/check-duplicates`);
     console.log(`\n📡 SUMBER: Bola.net, Goal.com, Google News`);
     console.log(`⏰ UPDATE: Setiap 10 menit (1 postingan)`);
+    console.log(`🗑️ AUTO CLEAN: Cek & hapus double setiap 1 jam`);
     console.log(`📊 SITEMAP: ${SITE_URL}/sitemap.xml`);
     console.log(`🤖 ROBOTS: ${SITE_URL}/robots.txt`);
     console.log(`\n📰 Memulai update pertama...\n`);
     await updateNews();
     setInterval(async () => { await updateNews(); }, 60 * 1000);
     setInterval(() => { backupDatabase(); generateSitemap(); submitToGoogle(); }, 60 * 60 * 1000);
-    console.log('⏰ Timer aktif: Pengecekan setiap 1 menit, posting setiap 10 menit\n');
+    // Auto check duplicates setiap 1 jam
+    setInterval(async () => { await checkAndRemoveDuplicates(); }, DUPLICATE_CHECK_INTERVAL);
+    console.log('⏰ Timer aktif: Pengecekan setiap 1 menit, posting setiap 10 menit');
+    console.log('🗑️ Timer double cleaner: Pengecekan setiap 1 jam\n');
 });
